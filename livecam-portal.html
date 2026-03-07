@@ -14,9 +14,7 @@
   --edge:  rgba(255,255,255,.07);
   --edge2: rgba(255,255,255,.12);
   --teal:  #2dd4bf;
-  --teal2: rgba(45,212,191,.2);
   --teal3: rgba(45,212,191,.08);
-  --blue:  #38bdf8;
   --amber: #fbbf24;
   --red:   #f87171;
   --green: #4ade80;
@@ -31,7 +29,6 @@ html{scroll-behavior:smooth;}
 body{font-family:var(--sans);background:var(--ink);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px);}
 
-/* ── HEADER ── */
 header{position:sticky;top:0;z-index:200;background:rgba(8,14,23,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--edge2);padding:0 14px;display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;}
 .logo{display:flex;align-items:center;gap:8px;}
 .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#0d9488,#0891b2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
@@ -41,33 +38,30 @@ header{position:sticky;top:0;z-index:200;background:rgba(8,14,23,.95);backdrop-f
 .hclock{font-family:var(--mono);font-size:15px;color:var(--teal);letter-spacing:.06em;}
 .hdate{font-family:var(--mono);font-size:8px;color:var(--muted);}
 
-/* ── FETCH BAR（河川タブ用） ── */
 .fetch-bar{padding:4px 14px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--edge);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;}
 .fb-label{font-family:var(--mono);font-size:9px;color:var(--muted);}
 .fb-val{font-family:var(--mono);font-size:9px;color:var(--text);}
 .pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);animation:pulse 3s infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
 
-/* ── NAV TABS ── */
-nav{background:var(--deep);border-bottom:1px solid var(--edge);padding:0 14px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+nav{background:var(--deep);border-bottom:1px solid var(--edge);padding:0 14px;display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
 nav::-webkit-scrollbar{display:none;}
 .tab{padding:9px 14px;background:none;border:none;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:5px;}
 .tab:hover{color:var(--text);}
 .tab.active{color:var(--teal);border-bottom-color:var(--teal);}
 .tab-count{background:var(--teal3);border:1px solid rgba(45,212,191,.2);border-radius:10px;padding:1px 6px;font-size:8px;color:var(--teal);}
 
-/* ── SECTIONS ── */
 .section{display:none;flex:1;}
 .section.active{display:flex;flex-direction:column;}
 
-/* ── 河川タブ専用：ツールバー＋グリッド ── */
+/* 河川タブ */
 .river-toolbar{background:var(--panel);border-bottom:1px solid var(--edge);padding:6px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;}
 .seg{display:flex;background:rgba(0,0,0,.3);border:1px solid var(--edge);border-radius:6px;overflow:hidden;}
 .seg-btn{padding:4px 12px;background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
 .seg-btn+.seg-btn{border-left:1px solid var(--edge);}
 .seg-btn:hover{color:var(--teal);}
 .seg-btn.active{background:var(--teal3);color:var(--teal);}
-.tbtn{padding:4px 11px;background:transparent;border:1px solid var(--edge);border-radius:5px;color:var(--muted);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.tbtn{padding:4px 11px;background:transparent;border:1px solid var(--edge);border-radius:5px;color:var(--muted);font-family:var(--mono);font-size:10px;cursor:pointer;transition:all .15s;}
 .tbtn:hover{border-color:var(--teal);color:var(--teal);}
 .ml-auto{margin-left:auto;}
 .s-row{display:flex;align-items:center;gap:8px;}
@@ -75,7 +69,6 @@ nav::-webkit-scrollbar{display:none;}
 .dot{width:6px;height:6px;border-radius:50%;}
 .dot-ok{background:var(--green);box-shadow:0 0 4px #4ade8088;}
 .dot-err{background:var(--red);box-shadow:0 0 4px #f8717188;}
-
 .workspace{flex:1;padding:8px;overflow:auto;}
 .grid{display:grid;gap:8px;}
 .grid.g1{grid-template-columns:1fr;}
@@ -85,7 +78,7 @@ nav::-webkit-scrollbar{display:none;}
 @media(max-width:640px){.grid.g8,.grid.gall{grid-template-columns:1fr 1fr;}}
 @media(min-width:641px) and (max-width:1024px){.grid.gall{grid-template-columns:repeat(3,1fr);}}
 
-/* ── 静止画カード ── */
+/* 静止画カード */
 .card{background:var(--card);border:1px solid var(--edge);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .3s;}
 .card.ok{border-color:rgba(74,222,128,.3);}
 .card.err{border-color:rgba(248,113,113,.25);}
@@ -100,41 +93,46 @@ nav::-webkit-scrollbar{display:none;}
 .spin{width:20px;height:20px;border:2px solid var(--edge);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .state-txt{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;line-height:1.6;}
-.img-bot{position:absolute;bottom:0;left:0;right:0;padding:18px 8px 5px;background:linear-gradient(transparent,rgba(0,0,0,.8));display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;}
+.img-bot{position:absolute;bottom:0;left:0;right:0;padding:18px 8px 5px;background:linear-gradient(transparent,rgba(0,0,0,.8));display:flex;justify-content:space-between;pointer-events:none;}
 .ov-time{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,.4);}
 .ov-pid{font-family:var(--mono);font-size:8px;color:rgba(45,212,191,.45);}
 .card-foot{padding:4px 10px;background:rgba(0,0,0,.2);border-top:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;gap:6px;}
 .foot-stamp{font-family:var(--mono);font-size:8px;color:var(--muted);flex:1;}
 .foot-link{font-family:var(--mono);font-size:8px;color:rgba(45,212,191,.5);text-decoration:none;}
 .foot-link:hover{color:var(--teal);}
-.foot-retry{font-size:11px;background:none;border:none;cursor:pointer;color:var(--muted);transition:color .15s;}
+.foot-retry{font-size:11px;background:none;border:none;cursor:pointer;color:var(--muted);}
 .foot-retry:hover{color:var(--teal);}
 
-/* ── YouTubeカード（河川グリッド内） ── */
+/* YouTubeカード */
 .yt-card{background:var(--card);border:1px solid rgba(248,113,113,.3);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
 .yt-head{padding:5px 10px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;}
-.yt-badge{font-family:var(--mono);font-size:8px;color:#f87171;display:flex;align-items:center;gap:3px;white-space:nowrap;}
+.yt-badge{font-family:var(--mono);font-size:8px;color:#f87171;display:flex;align-items:center;gap:3px;}
 .yt-badge-dot{width:5px;height:5px;border-radius:50%;background:#f87171;box-shadow:0 0 4px #f87171;animation:pulse 2s infinite;}
 .yt-wrap{position:relative;aspect-ratio:4/3;background:#000;}
 .yt-wrap iframe{width:100%;height:100%;border:none;display:block;}
 .yt-foot{padding:4px 10px;background:rgba(0,0,0,.2);border-top:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;}
 .yt-foot-txt{font-family:var(--mono);font-size:8px;color:var(--muted);}
 
+/* 配信なしカード */
+.offline-card{background:var(--card);border:1px solid rgba(255,255,255,.05);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;opacity:.6;}
+.offline-wrap{aspect-ratio:4/3;background:#0a0f16;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.offline-txt{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:center;}
+
 .loading-msg{display:flex;align-items:center;justify-content:center;height:200px;font-family:var(--mono);font-size:12px;color:var(--muted);}
 
-/* ── ポータルタブ共通 ── */
+/* ポータルタブ共通 */
 .portal-body{flex:1;padding:14px;overflow:auto;}
-.sec-title{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:.15em;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--edge);}
+.sec-title{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:.15em;display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--edge);}
 .sec-title::before{content:'';width:3px;height:14px;background:var(--teal);border-radius:2px;}
 .cam-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
 .cam-grid.wide{grid-template-columns:repeat(auto-fill,minmax(380px,1fr));}
 @media(max-width:600px){.cam-grid,.cam-grid.wide{grid-template-columns:1fr;}}
 .sub-sec{margin-bottom:20px;}
-.sub-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;padding-left:2px;}
+.sub-title{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;}
 
-/* ── ポータル カメラカード ── */
+/* ポータルカメラカード */
 .cam-card{background:var(--card);border:1px solid var(--edge);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .3s,transform .2s;}
-.cam-card:hover{border-color:var(--edge2);transform:translateY(-1px);}
+.cam-card:hover{border-color:rgba(255,255,255,.12);transform:translateY(-1px);}
 .cam-head{padding:7px 10px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;}
 .cam-name{font-size:11px;font-weight:700;color:var(--bright);}
 .cam-loc{font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:1px;}
@@ -144,13 +142,12 @@ nav::-webkit-scrollbar{display:none;}
 .badge-bousai{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2);}
 .cam-embed{position:relative;padding-bottom:56.25%;background:#0a0f16;overflow:hidden;}
 .cam-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
-.cam-link{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;gap:8px;text-decoration:none;background:var(--teal3);transition:background .2s;aspect-ratio:16/9;}
+.cam-link{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:8px;text-decoration:none;background:var(--teal3);aspect-ratio:16/9;transition:background .2s;}
 .cam-link:hover{background:rgba(45,212,191,.14);}
 .cam-link-icon{font-size:24px;opacity:.4;}
 .cam-link-text{font-family:var(--mono);font-size:10px;color:var(--teal);text-align:center;line-height:1.6;}
-.cam-link-url{font-family:var(--mono);font-size:8px;color:var(--muted);word-break:break-all;text-align:center;}
 
-/* ── 外部サイトカード ── */
+/* 外部サイトカード */
 .ext-card{background:var(--card);border:1px solid var(--edge);border-radius:10px;overflow:hidden;margin-bottom:10px;}
 .ext-head{padding:8px 12px;background:rgba(0,0,0,.3);border-bottom:1px solid var(--edge);display:flex;align-items:center;justify-content:space-between;}
 .ext-name{font-size:11px;font-weight:700;color:var(--bright);}
@@ -160,7 +157,7 @@ nav::-webkit-scrollbar{display:none;}
 .ext-link-name{font-size:11px;color:var(--text);flex:1;}
 .ext-link-arr{font-family:var(--mono);font-size:10px;color:var(--teal);}
 
-/* ── ライトボックス ── */
+/* ライトボックス */
 .lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:16px;}
 .lightbox.open{display:flex;}
 .lb-img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:6px;}
@@ -183,11 +180,10 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
   </div>
   <div class="h-right">
     <div class="hclock" id="clock">--:--:--</div>
-    <div class="hdate"  id="hdate">---- / -- / --</div>
+    <div class="hdate" id="hdate">---- / -- / --</div>
   </div>
 </header>
 
-<!-- 河川タブ専用のフェッチバー -->
 <div class="fetch-bar" id="fetch-bar">
   <span class="pulse"></span>
   <span class="fb-label">最終取得（JST）:</span>
@@ -200,22 +196,22 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
 </div>
 
 <nav>
-  <button class="tab active" id="tab-river"  onclick="showTab('river')">🌊 河川カメラ <span class="tab-count" id="tc-river">—</span></button>
-  <button class="tab"        id="tab-youtube" onclick="showTab('youtube')">▶ YouTube ライブ <span class="tab-count">17</span></button>
-  <button class="tab"        id="tab-road"    onclick="showTab('road')">🚗 道路カメラ <span class="tab-count">5</span></button>
-  <button class="tab"        id="tab-bousai"  onclick="showTab('bousai')">🚨 防災カメラ <span class="tab-count">4</span></button>
+  <button class="tab active" id="tab-river"   onclick="showTab('river')">🌊 河川カメラ <span class="tab-count" id="tc-river">—</span></button>
+  <button class="tab"        id="tab-youtube"  onclick="showTab('youtube')">▶ YouTube ライブ <span class="tab-count">17</span></button>
+  <button class="tab"        id="tab-road"     onclick="showTab('road')">🚗 道路カメラ <span class="tab-count">5</span></button>
+  <button class="tab"        id="tab-bousai"   onclick="showTab('bousai')">🚨 防災カメラ <span class="tab-count">4</span></button>
 </nav>
 
-<!-- ①河川カメラ -->
+<!-- ① 河川カメラ -->
 <div class="section active" id="sec-river">
   <div class="river-toolbar">
     <span style="font-family:var(--mono);font-size:9px;color:var(--muted)">表示:</span>
     <div class="seg">
-      <button class="seg-btn" id="btn1"   onclick="setMode(1)">１</button>
-      <button class="seg-btn" id="btn2"   onclick="setMode(2)">２</button>
-      <button class="seg-btn active" id="btn4" onclick="setMode(4)">４</button>
-      <button class="seg-btn" id="btn8"   onclick="setMode(8)">８</button>
-      <button class="seg-btn" id="btnall" onclick="setMode('all')">全</button>
+      <button class="seg-btn" id="btn1"   onclick="setMode(1)">１画面</button>
+      <button class="seg-btn" id="btn2"   onclick="setMode(2)">２画面</button>
+      <button class="seg-btn active" id="btn4" onclick="setMode(4)">４画面</button>
+      <button class="seg-btn" id="btn8"   onclick="setMode(8)">８画面</button>
+      <button class="seg-btn" id="btnall" onclick="setMode('all')">全画面</button>
     </div>
     <button class="tbtn" onclick="reloadAll()">↺ 今すぐ更新</button>
     <div class="ml-auto s-row">
@@ -230,7 +226,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
   </div>
 </div>
 
-<!-- ②YouTubeライブ -->
+<!-- ② YouTube ライブ -->
 <div class="section" id="sec-youtube">
   <div class="portal-body">
     <div class="sec-title">YouTube ライブカメラ</div>
@@ -243,29 +239,18 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">国際通り 牧志交番前</div><div class="cam-loc">那覇市牧志</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/Zhfodg0io7M?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">県庁前駅（朝日新聞那覇総局）</div><div class="cam-loc">那覇市久茂地</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/6HYjCFkmDPA?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">宜野湾市 大謝名交差点</div><div class="cam-loc">宜野湾市大謝名</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/WIYUrH4luck?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">西原町</div><div class="cam-loc">中頭郡西原町</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UC_suu_kome&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">北谷町砂辺</div><div class="cam-loc">中頭郡北谷町砂辺</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UCVeR5nMGxn1oqIfMUfpyIVA&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">那覇市古島</div><div class="cam-loc">那覇市古島</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UCsmhYj8SkM1cCcXekuaViAg&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">豊見城市宜保</div><div class="cam-loc">豊見城市宜保</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-豊見城市宜保" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
       </div>
     </div>
 
     <div class="sub-sec">
       <div class="sub-title">📍 中部・北部</div>
       <div class="cam-grid">
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">比地川</div><div class="cam-loc">国頭村比地</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UCJotsu_vision&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">本部町備瀬（エメラルドビーチ近く）</div><div class="cam-loc">国頭郡本部町備瀬</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/XTeL4encP9o?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">恩納村 マリブビーチ</div><div class="cam-loc">国頭郡恩納村</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UCnow2352&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">かりゆしビーチリゾート</div><div class="cam-loc">国頭郡恩納村</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UCKariyushi_Hotels&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-      </div>
-    </div>
-
-    <div class="sub-sec">
-      <div class="sub-title">📍 離島</div>
-      <div class="cam-grid">
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島</div><div class="cam-loc">石垣市</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/5jHCxMEGor0?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島 730交差点</div><div class="cam-loc">石垣市美崎町</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UC-ishigakiisland-2224&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島 ユーグレナ離島ターミナル</div><div class="cam-loc">石垣市美崎町</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/live_stream?channel=UC_ritodaterminal&autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
-        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">宮古島 ウォーターマークホテル</div><div class="cam-loc">宮古島市</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/4v5e4eKIT_E?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">恩納村 マリブビーチ</div><div class="cam-loc">国頭郡恩納村</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-恩納村マリブビーチ" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">かりゆしビーチリゾート</div><div class="cam-loc">国頭郡恩納村</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-かりゆしビーチリゾート" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">北谷町砂辺</div><div class="cam-loc">中頭郡北谷町砂辺</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-北谷町砂辺" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">那覇市古島</div><div class="cam-loc">那覇市古島</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-那覇市古島" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
       </div>
     </div>
 
@@ -278,16 +263,18 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
     </div>
 
     <div class="sub-sec">
-      <div class="sub-title">⚠ 映像が表示されない場合は直接チャンネルへ</div>
+      <div class="sub-title">📍 離島</div>
       <div class="cam-grid">
-        <a class="cam-card" href="https://www.youtube.com/@Jotsu_vision/live" target="_blank" style="text-decoration:none"><div class="cam-head"><div><div class="cam-name">比地川 @Jotsu_vision</div><div class="cam-loc">国頭村比地</div></div><span class="cam-badge badge-yt">チャンネルへ↗</span></div><div class="cam-link"><div class="cam-link-icon">▶</div><div class="cam-link-text">クリックしてYouTubeで視聴</div></div></a>
-        <a class="cam-card" href="https://www.youtube.com/@Kariyushi.Hotels/live" target="_blank" style="text-decoration:none"><div class="cam-head"><div><div class="cam-name">かりゆしビーチ @Kariyushi.Hotels</div><div class="cam-loc">恩納村</div></div><span class="cam-badge badge-yt">チャンネルへ↗</span></div><div class="cam-link"><div class="cam-link-icon">▶</div><div class="cam-link-text">クリックしてYouTubeで視聴</div></div></a>
-        <a class="cam-card" href="https://www.youtube.com/@now2352/live" target="_blank" style="text-decoration:none"><div class="cam-head"><div><div class="cam-name">恩納村マリブビーチ @now2352</div><div class="cam-loc">恩納村</div></div><span class="cam-badge badge-yt">チャンネルへ↗</span></div><div class="cam-link"><div class="cam-link-icon">▶</div><div class="cam-link-text">クリックしてYouTubeで視聴</div></div></a>
-        <a class="cam-card" href="https://www.youtube.com/@suu_kome_Livecam_Okinawa/live" target="_blank" style="text-decoration:none"><div class="cam-head"><div><div class="cam-name">西原町 @suu_kome_Livecam</div><div class="cam-loc">中頭郡西原町</div></div><span class="cam-badge badge-yt">チャンネルへ↗</span></div><div class="cam-link"><div class="cam-link-icon">▶</div><div class="cam-link-text">クリックしてYouTubeで視聴</div></div></a>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島</div><div class="cam-loc">石垣市</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/5jHCxMEGor0?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島730交差点</div><div class="cam-loc">石垣市美崎町</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-石垣島730交差点" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">石垣島ユーグレナ離島ターミナル</div><div class="cam-loc">石垣市美崎町</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-石垣島ユーグレナ離島ターミナル" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">宮古島 ウォーターマークホテル</div><div class="cam-loc">宮古島市</div></div><span class="cam-badge badge-yt">LIVE</span></div><div class="cam-embed"><iframe src="https://www.youtube.com/embed/4v5e4eKIT_E?autoplay=0&mute=1" allowfullscreen allow="autoplay;encrypted-media"></iframe></div></div>
       </div>
     </div>
 
-    <div class="sub-sec">
+    <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:4px">※ LIVE※ はAPIで動画IDを自動取得。配信停止中は「配信なし」と表示されます。</p>
+
+    <div class="sub-sec" style="margin-top:16px">
       <div class="sub-title">🏨 リゾートカメラ</div>
       <div class="cam-grid">
         <a class="cam-card" href="https://www.terrace.co.jp/busena/livecam/" target="_blank" style="text-decoration:none"><div class="cam-head"><div><div class="cam-name">ザ・ブセナテラス</div><div class="cam-loc">名護市喜瀬</div></div><span class="cam-badge badge-yt">海カメラ↗</span></div><div class="cam-link"><div class="cam-link-icon">🏖</div><div class="cam-link-text">クリックして公式サイトで視聴</div></div></a>
@@ -296,29 +283,25 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
   </div>
 </div>
 
-<!-- ③道路カメラ -->
+<!-- ③ 道路カメラ -->
 <div class="section" id="sec-road">
   <div class="portal-body">
     <div class="sec-title">道路ライブカメラ — 沖縄総合事務局 南部国道事務所</div>
-    <div class="cam-grid wide">
-      <div class="cam-card"><div class="cam-head"><div><div class="cam-name">①国道58号 読谷村比謝</div><div class="cam-loc">中頭郡読谷村</div></div><span class="cam-badge badge-road">道路</span></div><div class="cam-embed"><iframe src="https://www.dc.ogb.go.jp/nankoku/cctv/01.html" scrolling="no"></iframe></div></div>
-      <div class="cam-card"><div class="cam-head"><div><div class="cam-name">②国道329号 中城村久場</div><div class="cam-loc">中頭郡中城村</div></div><span class="cam-badge badge-road">道路</span></div><div class="cam-embed"><iframe src="https://www.dc.ogb.go.jp/nankoku/cctv/02.html" scrolling="no"></iframe></div></div>
-      <div class="cam-card"><div class="cam-head"><div><div class="cam-name">③国道329号 西原町小那覇</div><div class="cam-loc">中頭郡西原町</div></div><span class="cam-badge badge-road">道路</span></div><div class="cam-embed"><iframe src="https://www.dc.ogb.go.jp/nankoku/cctv/03.html" scrolling="no"></iframe></div></div>
-      <div class="cam-card"><div class="cam-head"><div><div class="cam-name">④国道331号 糸満市摩文仁</div><div class="cam-loc">糸満市摩文仁</div></div><span class="cam-badge badge-road">道路</span></div><div class="cam-embed"><iframe src="https://www.dc.ogb.go.jp/nankoku/cctv/04.html" scrolling="no"></iframe></div></div>
-      <div class="cam-card"><div class="cam-head"><div><div class="cam-name">⑤国道332号 那覇市安次嶺</div><div class="cam-loc">那覇市安次嶺</div></div><span class="cam-badge badge-road">道路</span></div><div class="cam-embed"><iframe src="https://www.dc.ogb.go.jp/nankoku/cctv/05.html" scrolling="no"></iframe></div></div>
+    <div id="road-grid" class="cam-grid wide">
+      <div class="loading-msg">カメラ情報を読み込み中…</div>
     </div>
-    <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:12px;text-align:center">※ iframeで表示できない場合は直接リンクからご確認ください</p>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;justify-content:center">
-      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/01.html" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--teal);text-decoration:none;padding:4px 10px;border:1px solid rgba(45,212,191,.2);border-radius:4px">①読谷↗</a>
-      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/02.html" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--teal);text-decoration:none;padding:4px 10px;border:1px solid rgba(45,212,191,.2);border-radius:4px">②中城↗</a>
-      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/03.html" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--teal);text-decoration:none;padding:4px 10px;border:1px solid rgba(45,212,191,.2);border-radius:4px">③西原↗</a>
-      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/04.html" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--teal);text-decoration:none;padding:4px 10px;border:1px solid rgba(45,212,191,.2);border-radius:4px">④糸満↗</a>
-      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/05.html" target="_blank" style="font-family:var(--mono);font-size:9px;color:var(--teal);text-decoration:none;padding:4px 10px;border:1px solid rgba(45,212,191,.2);border-radius:4px">⑤那覇↗</a>
-    </div>
+    <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:12px;text-align:center">
+      10分ごと自動更新 ｜ 直接リンク：
+      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/01.html" target="_blank" style="color:var(--teal);text-decoration:none">①読谷↗</a>　
+      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/02.html" target="_blank" style="color:var(--teal);text-decoration:none">②中城↗</a>　
+      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/03.html" target="_blank" style="color:var(--teal);text-decoration:none">③西原↗</a>　
+      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/04.html" target="_blank" style="color:var(--teal);text-decoration:none">④糸満↗</a>　
+      <a href="https://www.dc.ogb.go.jp/nankoku/cctv/05.html" target="_blank" style="color:var(--teal);text-decoration:none">⑤那覇↗</a>
+    </p>
   </div>
 </div>
 
-<!-- ④防災カメラ -->
+<!-- ④ 防災カメラ -->
 <div class="section" id="sec-bousai">
   <div class="portal-body">
     <div class="sec-title">防災監視カメラ</div>
@@ -336,7 +319,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
     </div>
     <div class="ext-card">
       <div class="ext-head"><div class="ext-name">🚨 沖縄市 水位監視カメラ（比謝川・泡瀬）</div><span class="cam-badge badge-bousai">防災</span></div>
-      <div class="ext-body"><a class="ext-link" href="https://www.city.okinawa.okinawa.jp/k058-003/anshin/bousai/saigaijouhou/22230.html" target="_blank"><span class="ext-link-name">沖縄市水位監視カメラ 一覧ページ（比謝川・泡瀬水路）</span><span class="ext-link-arr">↗</span></a></div>
+      <div class="ext-body"><a class="ext-link" href="https://www.city.okinawa.okinawa.jp/k058-003/anshin/bousai/saigaijouhou/22230.html" target="_blank"><span class="ext-link-name">沖縄市水位監視カメラ 一覧ページ</span><span class="ext-link-arr">↗</span></a></div>
     </div>
   </div>
 </div>
@@ -354,9 +337,9 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
 </footer>
 
 <script>
-// ── YouTube埋め込みで表示する河川カメラ ──
-const YT_CAMERAS = [
-  { id:'DBju-AkvIVM', name:'🌊 小波津川 金秀鉄工前',    loc:'西原町', ytUrl:'https://www.youtube.com/watch?v=DBju-AkvIVM' },
+// 固定動画IDのYouTubeカメラ（河川グリッド内）
+const YT_FIXED = [
+  { id:'DBju-AkvIVM', name:'🌊 小波津川 金秀鉄工前',     loc:'西原町', ytUrl:'https://www.youtube.com/watch?v=DBju-AkvIVM' },
   { id:'EkbG_VYkExM', name:'🌊 小波津川 さわふじ保育園前', loc:'西原町', ytUrl:'https://www.youtube.com/watch?v=EkbG_VYkExM' },
 ];
 
@@ -376,7 +359,6 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function esc(s){ return String(s).replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function imgSrc(f){ return `img_cam/${f}?t=${Date.now()}`; }
 
-// タブ切り替え
 function showTab(id) {
   ['river','youtube','road','bousai'].forEach(t => {
     document.getElementById('sec-'+t).classList.toggle('active', t===id);
@@ -385,31 +367,85 @@ function showTab(id) {
   document.getElementById('fetch-bar').style.display = id==='river' ? 'flex' : 'none';
 }
 
-// cameras.json 読み込み
+// YouTube動的カードに動画IDを反映
+function applyYoutubeLive(youtubeList) {
+  if (!youtubeList) return;
+  youtubeList.forEach(cam => {
+    const el = document.getElementById('yt-dyn-' + cam.name);
+    if (!el) return;
+    if (cam.video_id) {
+      el.innerHTML = `<iframe style="position:absolute;inset:0;width:100%;height:100%;border:none"
+        src="https://www.youtube.com/embed/${cam.video_id}?autoplay=0&mute=1"
+        allowfullscreen allow="autoplay;encrypted-media"></iframe>`;
+    } else {
+      el.innerHTML = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <div style="font-size:20px;opacity:.3">📡</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">現在配信なし</div>
+        <a href="https://www.youtube.com/channel/${cam.channel_id || ''}" target="_blank"
+           style="font-family:var(--mono);font-size:8px;color:var(--teal);text-decoration:none">チャンネルを開く↗</a>
+      </div>`;
+    }
+  });
+}
+
 async function loadCameras() {
   try {
     const res  = await fetch('cameras.json?t=' + Date.now());
     const data = await res.json();
     document.getElementById('fb-time').textContent = data.last_fetch_jst || '—';
 
+    // 河川カメラリスト構築
     CAMERAS = data.cameras.map(c => ({
       type:'static', filename:`p-${c.pid}.jpg`,
       name:'🌊 カメラ '+c.pid, loc:'p-'+c.pid,
       link:'http://bousai-kasen.pref.okinawa.jp/river/kasen/'
     }));
-
     if(data.extra_cameras){
       data.extra_cameras.forEach(c => {
         const info = EXTRA_CAM_INFO[c.key]||{};
         CAMERAS.push({ type:'static', filename:`${c.key}.jpg`, name:info.name||c.name, loc:info.loc||c.loc, link:info.link||'#' });
       });
     }
+    YT_FIXED.forEach(y => CAMERAS.push({ type:'youtube', ytId:y.id, name:y.name, loc:y.loc, ytUrl:y.ytUrl }));
 
-    YT_CAMERAS.forEach(y => CAMERAS.push({ type:'youtube', ytId:y.id, name:y.name, loc:y.loc, ytUrl:y.ytUrl }));
-
-    const total = data.camera_count + (data.extra_cameras?data.extra_cameras.length:0) + YT_CAMERAS.length;
+    const total = data.camera_count + (data.extra_cameras?data.extra_cameras.length:0) + YT_FIXED.length;
     document.getElementById('fb-count').textContent = total + '台';
     document.getElementById('tc-river').textContent  = total + '台';
+
+    // YouTube動的カード更新
+    applyYoutubeLive(data.youtube_live);
+
+    // 国道カメラグリッド描画
+    if(data.road_cameras && data.road_cameras.length > 0) {
+      const rg = document.getElementById('road-grid');
+      rg.innerHTML = '';
+      rg.className = 'cam-grid wide';
+      data.road_cameras.forEach((cam, i) => {
+        const d = document.createElement('div');
+        d.className = 'card'; d.id = 'rcard-'+i;
+        const num = cam.key.replace('road-','');
+        d.innerHTML = `
+          <div class="card-head">
+            <div><div class="card-river">${esc(cam.name)}</div><div class="card-loc">${esc(cam.loc)}</div></div>
+            <div class="live-badge"><div class="live-dot"></div>10分更新</div>
+          </div>
+          <div class="card-img">
+            <div class="state-ov" id="rld-${i}"><div class="spin"></div></div>
+            <div class="state-ov" id="rer-${i}" style="display:none">
+              <div style="font-size:20px;opacity:.2">🚗</div>
+              <div class="state-txt">画像未取得</div>
+            </div>
+            <img class="cam-img" id="rimg-${i}" style="opacity:0" src=""
+                 onload="rimgOK(${i})" onerror="rimgNG(${i})">
+          </div>
+          <div class="card-foot">
+            <span class="foot-stamp" id="rst-${i}">—</span>
+            <a class="foot-link" href="https://www.dc.ogb.go.jp/nankoku/cctv/${num}.html" target="_blank">公式サイト↗</a>
+          </div>`;
+        rg.appendChild(d);
+        setTimeout(() => { const img=document.getElementById('rimg-'+i); if(img) img.src=imgSrc(cam.key+'.jpg'); }, i*200);
+      });
+    }
 
     render();
   } catch(e) {
@@ -424,15 +460,12 @@ function render() {
   const modeMap = {1:'g1',2:'g2',4:'g4',8:'g8',all:'gall'};
   grid.className = 'grid ' + (modeMap[mode]||'g4');
   const count = mode==='all' ? CAMERAS.length : Math.min(mode, CAMERAS.length);
-
   for(let i=0; i<count; i++){
-    const cam = CAMERAS[i];
-    if(!cam) continue;
-
+    const cam = CAMERAS[i]; if(!cam) continue;
     if(cam.type==='youtube'){
       const d = document.createElement('div');
-      d.className = 'yt-card'; d.id = 'card-'+i;
-      d.innerHTML = `
+      d.className='yt-card'; d.id='card-'+i;
+      d.innerHTML=`
         <div class="yt-head">
           <div><div class="card-river">${esc(cam.name)}</div><div class="card-loc">${esc(cam.loc)}</div></div>
           <div class="yt-badge"><div class="yt-badge-dot"></div>LIVE</div>
@@ -442,28 +475,26 @@ function render() {
             allow="autoplay;encrypted-media" allowfullscreen loading="lazy"></iframe>
         </div>
         <div class="yt-foot">
-          <span class="yt-foot-txt">YouTube ライブ配信</span>
+          <span class="yt-foot-txt">YouTube ライブ</span>
           <a class="foot-link" href="${cam.ytUrl}" target="_blank">YouTubeで開く↗</a>
         </div>`;
-      grid.appendChild(d);
-      st[i]='ok';
+      grid.appendChild(d); st[i]='ok';
     } else {
       const d = document.createElement('div');
-      d.className = 'card'; d.id = 'card-'+i;
-      d.innerHTML = `
+      d.className='card'; d.id='card-'+i;
+      d.innerHTML=`
         <div class="card-head">
           <div><div class="card-river">${esc(cam.name)}</div><div class="card-loc">${esc(cam.loc)}</div></div>
           <div class="live-badge"><div class="live-dot"></div>10分更新</div>
         </div>
         <div class="card-img">
-          <div class="state-ov" id="ld-${i}"><div class="spin"></div><div class="state-txt">読込中…</div></div>
+          <div class="state-ov" id="ld-${i}"><div class="spin"></div></div>
           <div class="state-ov" id="er-${i}" style="display:none">
             <div style="font-size:20px;opacity:.2">📡</div>
             <div class="state-txt">画像未取得<br><span style="color:rgba(245,158,11,.7)">${esc(cam.filename)}</span></div>
             <button onclick="retry(${i})" style="margin-top:4px;padding:4px 12px;background:var(--teal3);border:1px solid rgba(45,212,191,.4);border-radius:5px;color:var(--teal);font-family:var(--mono);font-size:10px;cursor:pointer">↺ 再取得</button>
           </div>
-          <img class="cam-img" id="img-${i}" style="opacity:0" src=""
-               onload="imgOK(${i})" onerror="imgNG(${i})" onclick="openLb(${i})">
+          <img class="cam-img" id="img-${i}" style="opacity:0" src="" onload="imgOK(${i})" onerror="imgNG(${i})" onclick="openLb(${i})">
           <div class="img-bot">
             <span class="ov-time" id="ov-${i}">—</span>
             <span class="ov-pid">${esc(cam.filename)}</span>
@@ -474,14 +505,24 @@ function render() {
           <a class="foot-link" href="${cam.link}" target="_blank">公式サイト↗</a>
           <button class="foot-retry" onclick="retry(${i})">↺</button>
         </div>`;
-      grid.appendChild(d);
-      st[i]='loading';
+      grid.appendChild(d); st[i]='loading';
       setTimeout(()=>loadImg(i), i*150);
     }
   }
   updateCounts();
 }
 
+function rimgOK(i){
+  const img=document.getElementById('rimg-'+i), ld=document.getElementById('rld-'+i), card=document.getElementById('rcard-'+i);
+  if(img) img.style.opacity='1'; if(ld) ld.style.display='none'; if(card) card.className='card ok';
+  const now=new Date(), s=document.getElementById('rst-'+i);
+  if(s) s.textContent='更新: '+pad(now.getHours())+':'+pad(now.getMinutes());
+}
+function rimgNG(i){
+  const img=document.getElementById('rimg-'+i), ld=document.getElementById('rld-'+i), er=document.getElementById('rer-'+i), card=document.getElementById('rcard-'+i);
+  if(ld) ld.style.display='none'; if(img) img.style.display='none';
+  if(er) er.style.display='flex'; if(card) card.className='card err';
+}
 function loadImg(i){ const img=document.getElementById('img-'+i); if(img) img.src=imgSrc(CAMERAS[i].filename); }
 function imgOK(i){
   const img=document.getElementById('img-'+i), ld=document.getElementById('ld-'+i), card=document.getElementById('card-'+i);
@@ -502,7 +543,7 @@ function retry(i){
   if(!CAMERAS[i]||CAMERAS[i].type==='youtube') return;
   const img=document.getElementById('img-'+i), ld=document.getElementById('ld-'+i), er=document.getElementById('er-'+i), card=document.getElementById('card-'+i);
   if(er) er.style.display='none'; if(ld) ld.style.display='flex';
-  if(img){ img.style.display='block'; img.style.opacity='0'; }
+  if(img){img.style.display='block';img.style.opacity='0';}
   if(card) card.className='card'; st[i]='loading'; updateCounts(); loadImg(i);
 }
 function reloadAll(){
@@ -513,7 +554,7 @@ function reloadAll(){
 function updateCounts(){
   let ok=0,err=0;
   const count=mode==='all'?CAMERAS.length:Math.min(mode,CAMERAS.length);
-  for(let i=0;i<count;i++){ if(st[i]==='ok') ok++; if(st[i]==='error') err++; }
+  for(let i=0;i<count;i++){if(st[i]==='ok')ok++;if(st[i]==='error')err++;}
   document.getElementById('cnt-ok').textContent=ok;
   document.getElementById('cnt-err').textContent=err;
 }
@@ -529,8 +570,8 @@ function openLb(i){
   document.getElementById('lb-cap').textContent=CAMERAS[i].name+' — '+CAMERAS[i].loc;
   document.getElementById('lb').classList.add('open'); lbIdx=i;
 }
-function closeLb(){ document.getElementById('lb').classList.remove('open'); lbIdx=null; }
-document.addEventListener('keydown', e=>{
+function closeLb(){document.getElementById('lb').classList.remove('open');lbIdx=null;}
+document.addEventListener('keydown',e=>{
   if(e.key==='Escape') closeLb();
   const count=mode==='all'?CAMERAS.length:Math.min(mode,CAMERAS.length);
   if(e.key==='ArrowRight'&&lbIdx!==null) openLb((lbIdx+1)%count);
@@ -541,10 +582,10 @@ function tick(){
   const n=new Date();
   document.getElementById('clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
   document.getElementById('hdate').textContent=n.getFullYear()+' / '+pad(n.getMonth()+1)+' / '+pad(n.getDate());
-  if(nextAt){ const s=Math.max(0,Math.round((nextAt-Date.now())/1000)); document.getElementById('foot-r').textContent='次回更新: '+pad(Math.floor(s/60))+':'+pad(s%60); }
+  if(nextAt){const s=Math.max(0,Math.round((nextAt-Date.now())/1000));document.getElementById('foot-r').textContent='次回更新: '+pad(Math.floor(s/60))+':'+pad(s%60);}
 }
 
-setTimeout(()=>location.reload(), 10*60*1000);
+setTimeout(()=>location.reload(),10*60*1000);
 nextAt=Date.now()+10*60*1000;
 loadCameras(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
 </script>
