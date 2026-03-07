@@ -1,58 +1,58 @@
 {
-  "last_fetch_jst": "2026-03-08 01:30:31",
+  "last_fetch_jst": "2026-03-08 02:02:55",
   "camera_count": 42,
   "cameras": [
     {
       "pid": "01",
-      "size": 64994
+      "size": 64187
     },
     {
       "pid": "02",
-      "size": 48261
+      "size": 54520
     },
     {
       "pid": "03",
-      "size": 58894
+      "size": 60184
     },
     {
       "pid": "04",
-      "size": 42900
+      "size": 43006
     },
     {
       "pid": "05",
-      "size": 62802
+      "size": 62516
     },
     {
       "pid": "06",
-      "size": 35311
+      "size": 35172
     },
     {
       "pid": "07",
-      "size": 57490
+      "size": 57605
     },
     {
       "pid": "08",
-      "size": 48702
+      "size": 53596
     },
     {
       "pid": "09",
-      "size": 23102
+      "size": 22860
     },
     {
       "pid": "10",
-      "size": 44238
+      "size": 44452
     },
     {
       "pid": "11",
-      "size": 92636
+      "size": 92951
     },
     {
       "pid": "12",
-      "size": 68416
+      "size": 68451
     },
     {
       "pid": "13",
-      "size": 26524
+      "size": 26022
     },
     {
       "pid": "14",
@@ -60,27 +60,27 @@
     },
     {
       "pid": "15",
-      "size": 41749
+      "size": 41836
     },
     {
       "pid": "16",
-      "size": 77680
+      "size": 78001
     },
     {
       "pid": "17",
-      "size": 48352
+      "size": 49480
     },
     {
       "pid": "18",
-      "size": 28251
+      "size": 28376
     },
     {
       "pid": "19",
-      "size": 41992
+      "size": 42166
     },
     {
       "pid": "20",
-      "size": 54486
+      "size": 53561
     },
     {
       "pid": "21",
@@ -88,19 +88,19 @@
     },
     {
       "pid": "22",
-      "size": 57561
+      "size": 56275
     },
     {
       "pid": "23",
-      "size": 46522
+      "size": 44670
     },
     {
       "pid": "24",
-      "size": 56659
+      "size": 55928
     },
     {
       "pid": "25",
-      "size": 48071
+      "size": 48159
     },
     {
       "pid": "26",
@@ -120,11 +120,11 @@
     },
     {
       "pid": "41",
-      "size": 72227
+      "size": 72652
     },
     {
       "pid": "42",
-      "size": 47747
+      "size": 45144
     },
     {
       "pid": "43",
@@ -152,11 +152,11 @@
     },
     {
       "pid": "52",
-      "size": 43783
+      "size": 42001
     },
     {
       "pid": "53",
-      "size": 71147
+      "size": 72211
     },
     {
       "pid": "64",
@@ -176,13 +176,89 @@
       "key": "okinawa-city-awase1",
       "name": "泡瀬川①",
       "loc": "沖縄市（水位監視）",
-      "size": 24542
+      "size": 23886
     },
     {
       "key": "okinawa-city-awase2",
       "name": "泡瀬川②",
       "loc": "沖縄市（水位監視）",
-      "size": 24538
+      "size": 24261
+    }
+  ],
+  "road_cameras": [
+    {
+      "key": "road-01",
+      "name": "①国道58号 読谷村比謝",
+      "loc": "中頭郡読谷村",
+      "size": 80253
+    },
+    {
+      "key": "road-02",
+      "name": "②国道329号 中城村久場",
+      "loc": "中頭郡中城村",
+      "size": 22745
+    },
+    {
+      "key": "road-03",
+      "name": "③国道329号 西原町小那覇",
+      "loc": "中頭郡西原町",
+      "size": 75355
+    },
+    {
+      "key": "road-04",
+      "name": "④国道331号 糸満市摩文仁",
+      "loc": "糸満市摩文仁",
+      "size": 7399
+    },
+    {
+      "key": "road-05",
+      "name": "⑤国道332号 那覇市安次嶺",
+      "loc": "那覇市安次嶺",
+      "size": 39361
+    }
+  ],
+  "youtube_live": [
+    {
+      "name": "那覇市古島",
+      "loc": "那覇市古島",
+      "channel_id": "UCsmhYj8SkM1cCcXekuaViAg",
+      "video_id": "gCh64t6xWIE"
+    },
+    {
+      "name": "石垣島730交差点",
+      "loc": "石垣市美崎町",
+      "channel_id": "UCQJE3qm7Sjc5-JXAYjAfkrw",
+      "video_id": "W0lqUWF6GOg"
+    },
+    {
+      "name": "恩納村マリブビーチ",
+      "loc": "国頭郡恩納村",
+      "channel_id": "UC8bU0LyP49R7pL49LFwsPsg",
+      "video_id": "xARaicuHiuU"
+    },
+    {
+      "name": "かりゆしビーチリゾート",
+      "loc": "国頭郡恩納村",
+      "channel_id": "UCiVxzgxfn4OhuDygv5o5-mg",
+      "video_id": "AhQErfreEOE"
+    },
+    {
+      "name": "石垣島ユーグレナ離島ターミナル",
+      "loc": "石垣市美崎町",
+      "channel_id": "UCMBkpkdFghMYW6TQp7X77wA",
+      "video_id": "qOfCJYR0QjI"
+    },
+    {
+      "name": "北谷町砂辺",
+      "loc": "中頭郡北谷町",
+      "channel_id": "UCAtWb74mSuUVyOtN2DfPfKQ",
+      "video_id": "zzb8YRJAoyw"
+    },
+    {
+      "name": "豊見城市宜保",
+      "loc": "豊見城市宜保",
+      "channel_id": "UCIcAUp1HERvivHYI51IXI4Q",
+      "video_id": "735F2qpCvM0"
     }
   ]
 }
