@@ -65,10 +65,10 @@ jobs:
             KEY="${CAM%%:*}"
             LABEL="${CAM##*:}"
             curl -sf --max-time 15 --retry 2 \
-              -H "Referer: ${HIGASHI_BASE}/" \
+              -H "Referer: ${HIGASHI_BASE}/${KEY}.html" \
               -H "User-Agent: Mozilla/5.0" \
               -o "img_cam/higashi-${KEY}.jpg" \
-              "${HIGASHI_BASE}/${KEY}.jpg" \
+              "${HIGASHI_BASE}/photo/${KEY}.jpg" \
               && echo "OK: 東村 ${LABEL}" || echo "NG: 東村 ${LABEL}"
           done
 
@@ -85,10 +85,10 @@ jobs:
             KEY="${CAM%%:*}"
             LABEL="${CAM##*:}"
             curl -sf --max-time 15 --retry 2 \
-              -H "Referer: ${OGIMI_BASE}/" \
+              -H "Referer: ${OGIMI_BASE}/${KEY}.html" \
               -H "User-Agent: Mozilla/5.0" \
               -o "img_cam/ogimi-${KEY}.jpg" \
-              "${OGIMI_BASE}/${KEY}.jpg" \
+              "${OGIMI_BASE}/photo/${KEY}.jpg" \
               && echo "OK: 大宜味村 ${LABEL}" || echo "NG: 大宜味村 ${LABEL}"
           done
 
