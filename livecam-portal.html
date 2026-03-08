@@ -308,21 +308,25 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
 <div class="section" id="sec-bousai">
   <div class="portal-body">
     <div class="sec-title">防災監視カメラ</div>
-    <div class="ext-card">
-      <div class="ext-head"><div class="ext-name">🚨 東村 防災監視ライブカメラ</div><span class="cam-badge badge-bousai">防災</span></div>
-      <div class="ext-body"><a class="ext-link" href="http://www2.vill.higashi.okinawa.jp" target="_blank"><span class="ext-link-name">東村防災監視カメラ 一覧ページ</span><span class="ext-link-arr">↗</span></a></div>
+
+    <div class="sub-sec">
+      <div class="sub-title">🚨 東村 防災監視カメラ</div>
+      <div id="higashi-grid" class="cam-grid">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:20px">読み込み中…</div>
+      </div>
     </div>
-    <div class="ext-card">
-      <div class="ext-head"><div class="ext-name">🚨 大宜味村 防災ネットワークカメラ（7箇所）</div><span class="cam-badge badge-bousai">防災</span></div>
-      <div class="ext-body"><a class="ext-link" href="http://www-camera.vill.ogimi.lg.jp" target="_blank"><span class="ext-link-name">大宜味村防災ネットワークカメラ 一覧ページ</span><span class="ext-link-arr">↗</span></a></div>
+
+    <div class="sub-sec">
+      <div class="sub-title">🚨 大宜味村 防災ネットワークカメラ</div>
+      <div id="ogimi-grid" class="cam-grid">
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:20px">読み込み中…</div>
+      </div>
     </div>
-    <div class="ext-card">
-      <div class="ext-head"><div class="ext-name">🚨 北中城村 防災カメラ（島袋地内河川・小波津川）</div><span class="cam-badge badge-bousai">防災</span></div>
-      <div class="ext-body"><a class="ext-link" href="https://www.vill.kitanakagusuku.lg.jp/kakuka/soumu/soumukakari/bousai/329.html" target="_blank"><span class="ext-link-name">北中城村防災カメラ</span><span class="ext-link-arr">↗</span></a></div>
-    </div>
-    <div class="ext-card">
-      <div class="ext-head"><div class="ext-name">🚨 沖縄市 水位監視カメラ（比謝川・泡瀬）</div><span class="cam-badge badge-bousai">防災</span></div>
-      <div class="ext-body"><a class="ext-link" href="https://www.city.okinawa.okinawa.jp/k058-003/anshin/bousai/saigaijouhou/22230.html" target="_blank"><span class="ext-link-name">沖縄市水位監視カメラ 一覧ページ</span><span class="ext-link-arr">↗</span></a></div>
+
+    <div class="sub-sec">
+      <div class="sub-title">🔗 その他 外部リンク</div>
+      <div class="ext-card"><div class="ext-head"><div class="ext-name">🚨 北中城村 防災カメラ</div><span class="cam-badge badge-bousai">防災</span></div><div class="ext-body"><a class="ext-link" href="https://www.vill.kitanakagusuku.lg.jp/kakuka/soumu/soumukakari/bousai/329.html" target="_blank"><span class="ext-link-name">北中城村防災カメラ</span><span class="ext-link-arr">↗</span></a></div></div>
+      <div class="ext-card"><div class="ext-head"><div class="ext-name">🚨 沖縄市 水位監視カメラ</div><span class="cam-badge badge-bousai">防災</span></div><div class="ext-body"><a class="ext-link" href="https://www.city.okinawa.okinawa.jp/k058-003/anshin/bousai/saigaijouhou/22230.html" target="_blank"><span class="ext-link-name">沖縄市水位監視カメラ 一覧ページ</span><span class="ext-link-arr">↗</span></a></div></div>
     </div>
   </div>
 </div>
@@ -438,6 +442,34 @@ async function loadCameras(){
           setTimeout(()=>{const img=document.getElementById('rimg-'+i);if(img)img.src=imgSrc(cam.key+'.jpg');},i*200);
         });
       }
+      // 東村・大宜味村カメラグリッド描画（初回のみ）
+      function buildBousaiGrid(gridId, camList, label) {
+        const g = document.getElementById(gridId);
+        if (!g || !camList || camList.length === 0) {
+          if (g) g.innerHTML = `<div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:20px">${label}のカメラ画像を取得できませんでした（HTTPアクセス制限の可能性）</div>`;
+          return;
+        }
+        g.innerHTML = '';
+        camList.forEach((cam, i) => {
+          const uid = gridId + '-' + i;
+          const d = document.createElement('div');
+          d.className = 'card'; d.id = 'bc-' + uid;
+          d.innerHTML = `<div class="card-head"><div><div class="card-river">${esc(cam.name)}</div><div class="card-loc">${esc(cam.loc)}</div></div><div class="live-badge"><div class="live-dot"></div>10分更新</div></div>
+            <div class="card-img"><div class="state-ov" id="bld-${uid}"><div class="spin"></div></div>
+            <div class="state-ov" id="ber-${uid}" style="display:none"><div style="font-size:20px;opacity:.2">📡</div><div class="state-txt">画像未取得</div></div>
+            <img class="cam-img" id="bimg-${uid}" style="opacity:0" onload="bimgOK('${uid}')" onerror="bimgNG('${uid}')"></div>
+            <div class="card-foot"><span class="foot-stamp" id="bst-${uid}">—</span></div>`;
+          g.appendChild(d);
+          setTimeout(() => {
+            const img = document.getElementById('bimg-' + uid);
+            if (img) img.src = imgSrc(cam.key + '.jpg');
+          }, i * 200);
+        });
+      }
+
+      buildBousaiGrid('higashi-grid', data.higashi_cameras, '東村');
+      buildBousaiGrid('ogimi-grid',   data.ogimi_cameras,   '大宜味村');
+
       render();
     } else {
       // ── 2回目以降：DOMを壊さず画像srcだけ静かに更新 ──
@@ -504,6 +536,8 @@ function render(){
   updateCounts();
 }
 
+function bimgOK(uid){const img=document.getElementById('bimg-'+uid),ld=document.getElementById('bld-'+uid),card=document.getElementById('bc-'+uid);if(img)img.style.opacity='1';if(ld)ld.style.display='none';if(card)card.className='card ok';const now=new Date(),s=document.getElementById('bst-'+uid);if(s)s.textContent='更新: '+pad(now.getHours())+':'+pad(now.getMinutes());}
+function bimgNG(uid){const img=document.getElementById('bimg-'+uid),ld=document.getElementById('bld-'+uid),er=document.getElementById('ber-'+uid),card=document.getElementById('bc-'+uid);if(ld)ld.style.display='none';if(img)img.style.display='none';if(er)er.style.display='flex';if(card)card.className='card err';}
 function rimgOK(i){const img=document.getElementById('rimg-'+i),ld=document.getElementById('rld-'+i),card=document.getElementById('rcard-'+i);if(img)img.style.opacity='1';if(ld)ld.style.display='none';if(card)card.className='card ok';const now=new Date(),s=document.getElementById('rst-'+i);if(s)s.textContent='更新: '+pad(now.getHours())+':'+pad(now.getMinutes());}
 function rimgNG(i){const img=document.getElementById('rimg-'+i),ld=document.getElementById('rld-'+i),er=document.getElementById('rer-'+i),card=document.getElementById('rcard-'+i);if(ld)ld.style.display='none';if(img)img.style.display='none';if(er)er.style.display='flex';if(card)card.className='card err';}
 function loadImg(i){const img=document.getElementById('img-'+i);if(img)img.src=imgSrc(CAMERAS[i].filename);}
