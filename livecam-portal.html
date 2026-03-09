@@ -25,18 +25,6 @@
   --mono:  'JetBrains Mono', monospace;
   --sans:  'Noto Sans JP', sans-serif;
 }
-/* ── ネイビーテーマ ── */
-[data-theme="navy"] {
-  --ink:   #1a2332;
-  --deep:  #1e2d40;
-  --panel: #243347;
-  --card:  #2a3d52;
-  --edge:  rgba(255,255,255,.10);
-  --edge2: rgba(255,255,255,.18);
-  --muted: #8ab0cc;
-  --text:  #e0eff9;
-  --bright:#f0f7ff;
-}
 /* ── ライトテーマ ── */
 [data-theme="light"] {
   --ink:   #f0f4f8;
@@ -65,7 +53,6 @@
 /* PC: ボタンにラベルを付加 */
 @media(min-width:641px){
   #theme-dark::after{content:' ダーク';}
-  #theme-navy::after{content:' ネイビー';}
   #theme-light::after{content:' ライト';}
   .info-btn::after{content:' このサイトについて';}
 }
@@ -289,9 +276,7 @@ footer{background:var(–deep);border-top:1px solid var(–edge);padding:5px 14p
   <div class="theme-switcher">
     <button class="theme-btn info-btn" onclick="openInfo()">？</button>
     <button class="theme-btn active" id="theme-dark"  onclick="setTheme('dark')">🌑</button>
-    <button class="theme-btn"        id="theme-navy"  onclick="setTheme('navy')">🌊</button>
     <button class="theme-btn"        id="theme-light" onclick="setTheme('light')">☀️</button>
-    <span class="theme-label" id="theme-label-dark"  style="display:none"> ダーク</span>
   </div>
   <div class="h-right">
     <div class="hclock" id="clock">--:--:--</div>
@@ -951,7 +936,7 @@ function tick(){const n=new Date();document.getElementById('clock').textContent=
 
 function setTheme(t){
   document.documentElement.setAttribute('data-theme', t==='dark'?'':t);
-  ['dark','navy','light'].forEach(n=>document.getElementById('theme-'+n).classList.toggle('active',n===t));
+  ['dark','light'].forEach(n=>document.getElementById('theme-'+n).classList.toggle('active',n===t));
   try{localStorage.setItem('theme',t);}catch(e){}
 }
 // 起動時に保存済みテーマを適用
@@ -1002,8 +987,8 @@ async function loadBousaiInfo(){
           <a class="ext-link" href="https://www.jma.go.jp/bosai/warning/#area_type=offices&area_code=471000" target="_blank">
             <span class="ext-link-name">気象庁 沖縄県の警報・注意報</span><span class="ext-link-arr">↗</span>
           </a>
-          <a class="ext-link" href="https://www.jma.go.jp/jp/warn/okinawa_index.html" target="_blank">
-            <span class="ext-link-name">沖縄地方 気象情報</span><span class="ext-link-arr">↗</span>
+          <a class="ext-link" href="https://www.jma-net.go.jp/okinawa/" target="_blank">
+            <span class="ext-link-name">沖縄気象台</span><span class="ext-link-arr">↗</span>
           </a>
         </div>
       </div>`;
