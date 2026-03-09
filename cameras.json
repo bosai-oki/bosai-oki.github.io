@@ -1,58 +1,58 @@
 {
-  "last_fetch_jst": "2026-03-10 04:27:55",
+  "last_fetch_jst": "2026-03-10 06:02:42",
   "camera_count": 42,
   "cameras": [
     {
       "pid": "01",
-      "size": 68140
+      "size": 66415
     },
     {
       "pid": "02",
-      "size": 51885
+      "size": 46493
     },
     {
       "pid": "03",
-      "size": 87647
+      "size": 71995
     },
     {
       "pid": "04",
-      "size": 43372
+      "size": 43162
     },
     {
       "pid": "05",
-      "size": 60584
+      "size": 60674
     },
     {
       "pid": "06",
-      "size": 37401
+      "size": 35352
     },
     {
       "pid": "07",
-      "size": 58437
+      "size": 55755
     },
     {
       "pid": "08",
-      "size": 52459
+      "size": 48670
     },
     {
       "pid": "09",
-      "size": 22951
+      "size": 23063
     },
     {
       "pid": "10",
-      "size": 44388
+      "size": 46024
     },
     {
       "pid": "11",
-      "size": 90305
+      "size": 90257
     },
     {
       "pid": "12",
-      "size": 65890
+      "size": 62180
     },
     {
       "pid": "13",
-      "size": 25041
+      "size": 24556
     },
     {
       "pid": "14",
@@ -60,7 +60,7 @@
     },
     {
       "pid": "15",
-      "size": 51714
+      "size": 49637
     },
     {
       "pid": "16",
@@ -68,19 +68,19 @@
     },
     {
       "pid": "17",
-      "size": 52019
+      "size": 49369
     },
     {
       "pid": "18",
-      "size": 27322
+      "size": 29533
     },
     {
       "pid": "19",
-      "size": 41975
+      "size": 40420
     },
     {
       "pid": "20",
-      "size": 50078
+      "size": 64032
     },
     {
       "pid": "21",
@@ -88,19 +88,19 @@
     },
     {
       "pid": "22",
-      "size": 58830
+      "size": 57173
     },
     {
       "pid": "23",
-      "size": 45539
+      "size": 45272
     },
     {
       "pid": "24",
-      "size": 42266
+      "size": 40423
     },
     {
       "pid": "25",
-      "size": 47944
+      "size": 47604
     },
     {
       "pid": "26",
@@ -120,11 +120,11 @@
     },
     {
       "pid": "41",
-      "size": 66023
+      "size": 68373
     },
     {
       "pid": "42",
-      "size": 44118
+      "size": 44985
     },
     {
       "pid": "43",
@@ -152,11 +152,11 @@
     },
     {
       "pid": "52",
-      "size": 43763
+      "size": 42244
     },
     {
       "pid": "53",
-      "size": 67292
+      "size": 66311
     },
     {
       "pid": "64",
@@ -176,19 +176,19 @@
       "key": "okinawa-city-hija",
       "name": "比謝川",
       "loc": "沖縄市（水位監視）",
-      "size": 40112
+      "size": 39265
     },
     {
       "key": "okinawa-city-awase1",
       "name": "泡瀬川①",
       "loc": "沖縄市（水位監視）",
-      "size": 23753
+      "size": 24204
     },
     {
       "key": "okinawa-city-awase2",
       "name": "泡瀬川②",
       "loc": "沖縄市（水位監視）",
-      "size": 24505
+      "size": 22988
     }
   ],
   "road_cameras": [
@@ -240,7 +240,7 @@
       "key": "higashi-higashi-port",
       "name": "東漁港",
       "loc": "東村",
-      "size": 40048
+      "size": 39334
     },
     {
       "key": "higashi-fkc-park",
@@ -278,43 +278,43 @@
       "key": "ogimi-nousonic",
       "name": "農村環境改善センター",
       "loc": "大宜味村",
-      "size": 31149
+      "size": 30002
     },
     {
       "key": "ogimi-takazatocc",
       "name": "田嘉里公民館",
       "loc": "大宜味村",
-      "size": 27709
+      "size": 29833
     },
     {
       "key": "ogimi-ogimiej",
       "name": "大宜味小中学校",
       "loc": "大宜味村",
-      "size": 31600
+      "size": 31346
     },
     {
       "key": "ogimi-tuhacc",
       "name": "津波公民館",
       "loc": "大宜味村",
-      "size": 29594
+      "size": 29719
     },
     {
       "key": "ogimi-taihocc",
       "name": "大保公民館",
       "loc": "大宜味村",
-      "size": 14600
+      "size": 32612
     },
     {
       "key": "ogimi-shioya",
       "name": "旧塩屋小学校",
       "loc": "大宜味村",
-      "size": 27901
+      "size": 28697
     },
     {
       "key": "ogimi-ogimiejgrd",
       "name": "旧大宜味小学校グラウンド",
       "loc": "大宜味村",
-      "size": 28217
+      "size": 31611
     }
   ],
   "youtube_live": [
