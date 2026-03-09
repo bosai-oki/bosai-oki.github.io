@@ -24,6 +24,39 @@
   --mono:  'JetBrains Mono', monospace;
   --sans:  'Noto Sans JP', sans-serif;
 }
+/* ── ネイビーテーマ ── */
+[data-theme="navy"] {
+  --ink:   #1a2332;
+  --deep:  #1e2d40;
+  --panel: #243347;
+  --card:  #2a3d52;
+  --edge:  rgba(255,255,255,.10);
+  --edge2: rgba(255,255,255,.18);
+  --muted: #7a9bb5;
+  --text:  #d8e8f5;
+  --bright:#f0f7ff;
+}
+/* ── ライトテーマ ── */
+[data-theme="light"] {
+  --ink:   #f0f4f8;
+  --deep:  #e2eaf3;
+  --panel: #d8e4f0;
+  --card:  #ffffff;
+  --edge:  rgba(0,0,0,.08);
+  --edge2: rgba(0,0,0,.15);
+  --teal:  #0d7a70;
+  --teal3: rgba(13,122,112,.08);
+  --muted: #6b8aaa;
+  --text:  #1e3a50;
+  --bright:#0d1e2e;
+  --green: #16a34a;
+  --red:   #dc2626;
+}
+[data-theme="light"] body::before{display:none;}
+[data-theme="light"] header{background:rgba(240,244,248,.97);}
+.theme-btn{padding:3px 9px;background:transparent;border:1px solid var(--edge2);border-radius:5px;color:var(--muted);font-family:var(--mono);font-size:9px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.theme-btn:hover,.theme-btn.active{border-color:var(--teal);color:var(--teal);background:var(--teal3);}
+.theme-switcher{display:flex;gap:4px;align-items:center;margin-right:8px;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{font-family:var(--sans);background:var(--ink);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow-x:hidden;}
@@ -181,6 +214,11 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
       <div class="logo-sub">河川 · 道路 · 防災 · YouTube ライブ一覧</div>
     </div>
   </div>
+  <div class="theme-switcher">
+    <button class="theme-btn active" id="theme-dark"  onclick="setTheme('dark')">🌑 ダーク</button>
+    <button class="theme-btn"        id="theme-navy"  onclick="setTheme('navy')">🌊 ネイビー</button>
+    <button class="theme-btn"        id="theme-light" onclick="setTheme('light')">☀️ ライト</button>
+  </div>
   <div class="h-right">
     <div class="hclock" id="clock">--:--:--</div>
     <div class="hdate" id="hdate">---- / -- / --</div>
@@ -200,7 +238,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
 
 <nav>
   <button class="tab active" id="tab-river"   onclick="showTab('river')">🌊 河川カメラ <span class="tab-count" id="tc-river">—</span></button>
-  <button class="tab"        id="tab-youtube"  onclick="showTab('youtube')">▶ YouTube ライブ <span class="tab-count">17</span></button>
+  <button class="tab"        id="tab-youtube"  onclick="showTab('youtube')">▶ YouTube ライブ <span class="tab-count">18</span></button>
   <button class="tab"        id="tab-road"     onclick="showTab('road')">🚗 道路カメラ <span class="tab-count">5</span></button>
   <button class="tab"        id="tab-bousai"   onclick="showTab('bousai')">🚨 防災カメラ <span class="tab-count">4</span></button>
 </nav>
@@ -254,6 +292,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">かりゆしビーチリゾート</div><div class="cam-loc">国頭郡恩納村</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-かりゆしビーチリゾート" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">北谷町砂辺</div><div class="cam-loc">中頭郡北谷町砂辺</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-北谷町砂辺" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
         <div class="cam-card"><div class="cam-head"><div><div class="cam-name">那覇市古島</div><div class="cam-loc">那覇市古島</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-那覇市古島" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
+        <div class="cam-card"><div class="cam-head"><div><div class="cam-name">比地川（国頭村）</div><div class="cam-loc">国頭郡国頭村</div></div><span class="cam-badge badge-yt">LIVE※</span></div><div id="yt-dyn-比地川（国頭村）" class="cam-embed"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;color:var(--muted)">読込中…</div></div></div>
       </div>
     </div>
 
@@ -656,6 +695,14 @@ lb.addEventListener('touchend',e=>{
 },{passive:true});
 
 function tick(){const n=new Date();document.getElementById('clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());document.getElementById('hdate').textContent=n.getFullYear()+' / '+pad(n.getMonth()+1)+' / '+pad(n.getDate());if(nextAt){const s=Math.max(0,Math.round((nextAt-Date.now())/1000));document.getElementById('foot-r').textContent='次回更新: '+pad(Math.floor(s/60))+':'+pad(s%60);}}
+
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme', t==='dark'?'':t);
+  ['dark','navy','light'].forEach(n=>document.getElementById('theme-'+n).classList.toggle('active',n===t));
+  try{localStorage.setItem('theme',t);}catch(e){}
+}
+// 起動時に保存済みテーマを適用
+(function(){try{const t=localStorage.getItem('theme');if(t)setTheme(t);}catch(e){}})();
 
 setTimeout(()=>location.reload(),10*60*1000);
 nextAt=Date.now()+10*60*1000;
