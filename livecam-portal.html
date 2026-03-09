@@ -378,6 +378,21 @@ function pad(n){return String(n).padStart(2,'0');}
 function esc(s){return String(s).replace(/</g,'&lt;').replace(/"/g,'&quot;');}
 function imgSrc(f){return `img_cam/${f}?t=${Date.now()}`;}
 
+// キャッシュを完全に回避してimgにセットする
+async function setImgNoCache(imgEl, url) {
+  try {
+    const res = await fetch(url + '?t=' + Date.now(), {cache: 'no-store'});
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    const old = imgEl.src;
+    imgEl.src = URL.createObjectURL(blob);
+    if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
+  } catch(e) {
+    // fetchが失敗したら従来のimgSrc方式にフォールバック
+    imgEl.src = url + '?t=' + Date.now();
+  }
+}
+
 function showTab(id){
   ['river','youtube','road','bousai'].forEach(t=>{
     document.getElementById('sec-'+t).classList.toggle('active',t===id);
@@ -447,7 +462,7 @@ async function loadCameras(){
             <div class="card-foot"><span class="foot-stamp" id="rst-${i}">—</span>
             <a class="foot-link" href="https://www.dc.ogb.go.jp/nankoku/cctv/${num}.html" target="_blank">公式サイト↗</a></div>`;
           rg.appendChild(d);
-          setTimeout(()=>{const img=document.getElementById('rimg-'+i);if(img)img.src=imgSrc(cam.key+'.jpg');},i*200);
+          setTimeout(()=>{const img=document.getElementById('rimg-'+i);if(img)setImgNoCache(img,`img_cam/${cam.key}.jpg`);},i*200);
         });
       }
       // 東村・大宜味村カメラグリッド描画（初回のみ）
@@ -465,12 +480,12 @@ async function loadCameras(){
           d.innerHTML = `<div class="card-head"><div><div class="card-river">${esc(cam.name)}</div><div class="card-loc">${esc(cam.loc)}</div></div><div class="live-badge"><div class="live-dot"></div>10分更新</div></div>
             <div class="card-img"><div class="state-ov" id="bld-${uid}"><div class="spin"></div></div>
             <div class="state-ov" id="ber-${uid}" style="display:none"><div style="font-size:20px;opacity:.2">📡</div><div class="state-txt">画像未取得</div></div>
-            <img class="cam-img" id="bimg-${uid}" style="opacity:0" onload="bimgOK('${uid}')" onerror="bimgNG('${uid}')"></div>
+            <img class="cam-img" id="bimg-${uid}" data-src="img_cam/${cam.key}.jpg" style="opacity:0" onload="bimgOK('${uid}')" onerror="bimgNG('${uid}')"></div>
             <div class="card-foot"><span class="foot-stamp" id="bst-${uid}">—</span></div>`;
           g.appendChild(d);
           setTimeout(() => {
             const img = document.getElementById('bimg-' + uid);
-            if (img) img.src = imgSrc(cam.key + '.jpg');
+            if (img) setImgNoCache(img, `img_cam/${cam.key}.jpg`);
           }, i * 200);
         });
       }
@@ -485,21 +500,13 @@ async function loadCameras(){
       for(let i=0;i<count;i++){
         if(!CAMERAS[i]||CAMERAS[i].type!=='static') continue;
         if(st[i]==='ok'){
-          // バックグラウンドで新しい画像を先読みしてから切り替え（ちらつきなし）
-          const newSrc=imgSrc(CAMERAS[i].filename);
-          const tmp=new Image();
-          tmp.onload=(function(idx,src){return function(){const el=document.getElementById('img-'+idx);if(el)el.src=src;};})(i,newSrc);
-          tmp.src=newSrc;
+          const img=document.getElementById('img-'+i);
+          if(img) setImgNoCache(img, `img_cam/${CAMERAS[i].filename}`);
         }
       }
       if(data.road_cameras) data.road_cameras.forEach((cam,i)=>{
         const img=document.getElementById('rimg-'+i);
-        if(img&&img.style.opacity==='1'){
-          const newSrc=imgSrc(cam.key+'.jpg');
-          const tmp=new Image();
-          tmp.onload=(function(idx,src){return function(){const el=document.getElementById('rimg-'+idx);if(el)el.src=src;};})(i,newSrc);
-          tmp.src=newSrc;
-        }
+        if(img&&img.style.opacity==='1') setImgNoCache(img, `img_cam/${cam.key}.jpg`);
       });
     }
   } catch(e){
@@ -548,7 +555,7 @@ function bimgOK(uid){const img=document.getElementById('bimg-'+uid),ld=document.
 function bimgNG(uid){const img=document.getElementById('bimg-'+uid),ld=document.getElementById('bld-'+uid),er=document.getElementById('ber-'+uid),card=document.getElementById('bc-'+uid);if(ld)ld.style.display='none';if(img)img.style.display='none';if(er)er.style.display='flex';if(card)card.className='card err';}
 function rimgOK(i){const img=document.getElementById('rimg-'+i),ld=document.getElementById('rld-'+i),card=document.getElementById('rcard-'+i);if(img)img.style.opacity='1';if(ld)ld.style.display='none';if(card)card.className='card ok';const now=new Date(),s=document.getElementById('rst-'+i);if(s)s.textContent='更新: '+pad(now.getHours())+':'+pad(now.getMinutes());}
 function rimgNG(i){const img=document.getElementById('rimg-'+i),ld=document.getElementById('rld-'+i),er=document.getElementById('rer-'+i),card=document.getElementById('rcard-'+i);if(ld)ld.style.display='none';if(img)img.style.display='none';if(er)er.style.display='flex';if(card)card.className='card err';}
-function loadImg(i){const img=document.getElementById('img-'+i);if(img)img.src=imgSrc(CAMERAS[i].filename);}
+function loadImg(i){const img=document.getElementById('img-'+i);if(img)setImgNoCache(img,`img_cam/${CAMERAS[i].filename}`);}
 function imgOK(i){
   const img=document.getElementById('img-'+i),ld=document.getElementById('ld-'+i),card=document.getElementById('card-'+i);
   if(img)img.style.opacity='1';if(ld)ld.style.display='none';if(card)card.className='card ok';
@@ -567,8 +574,8 @@ function retry(i){
   if(card)card.className='card';st[i]='loading';updateCounts();loadImg(i);
 }
 function reloadAll(){const count=mode==='all'?CAMERAS.length:Math.min(mode,CAMERAS.length);for(let i=0;i<count;i++)if(CAMERAS[i]&&CAMERAS[i].type!=='youtube')retry(i);nextAt=Date.now()+10*60*1000;}
-function reloadRoad(){const imgs=document.querySelectorAll('[id^="rimg-"]');imgs.forEach((img,i)=>{const ld=document.getElementById('rld-'+i),er=document.getElementById('rer-'+i),card=document.getElementById('rcard-'+i);if(er)er.style.display='none';if(ld)ld.style.display='flex';if(img){img.style.display='block';img.style.opacity='0';}if(card)card.className='card';setTimeout(()=>{img.src=img.src.replace(/\?t=\d+/,'')+'?t='+Date.now();},i*200);});}
-function reloadBousai(){const imgs=document.querySelectorAll('[id^="bimg-"]');imgs.forEach((img,i)=>{const uid=img.id.replace('bimg-',''),ld=document.getElementById('bld-'+uid),er=document.getElementById('ber-'+uid),card=document.getElementById('bc-'+uid);if(er)er.style.display='none';if(ld)ld.style.display='flex';if(img){img.style.display='block';img.style.opacity='0';}if(card)card.className='card';setTimeout(()=>{img.src=img.src.replace(/\?t=\d+/,'')+'?t='+Date.now();},i*200);});}
+function reloadRoad(){document.querySelectorAll('[id^="rimg-"]').forEach((img,i)=>{const ld=document.getElementById('rld-'+i),er=document.getElementById('rer-'+i),card=document.getElementById('rcard-'+i);if(er)er.style.display='none';if(ld)ld.style.display='flex';if(img){img.style.display='block';img.style.opacity='0';}if(card)card.className='card';setTimeout(()=>setImgNoCache(img,img.src.split('?')[0]),i*200);});}
+function reloadBousai(){document.querySelectorAll('[id^="bimg-"]').forEach((img,i)=>{const uid=img.id.replace('bimg-',''),ld=document.getElementById('bld-'+uid),er=document.getElementById('ber-'+uid),card=document.getElementById('bc-'+uid);if(er)er.style.display='none';if(ld)ld.style.display='flex';if(img){img.style.display='block';img.style.opacity='0';}if(card)card.className='card';setTimeout(()=>setImgNoCache(img,img.src.split('?')[0].replace(/^blob:.+/,img.dataset.src||'')),i*200);});}
 function updateCounts(){let ok=0,err=0;const count=mode==='all'?CAMERAS.length:Math.min(mode,CAMERAS.length);for(let i=0;i<count;i++){if(st[i]==='ok')ok++;if(st[i]==='error')err++;}document.getElementById('cnt-ok').textContent=ok;document.getElementById('cnt-err').textContent=err;}
 function setMode(n){mode=n;['1','2','4','8','all'].forEach(v=>document.getElementById('btn'+v).classList.toggle('active',v==String(n)));Object.keys(st).forEach(k=>delete st[k]);render();}
 function openLb(i){if(st[i]!=='ok'||!CAMERAS[i]||CAMERAS[i].type==='youtube')return;const img=document.getElementById('img-'+i);document.getElementById('lb-img').src=img.src;document.getElementById('lb-cap').textContent=CAMERAS[i].name+' — '+CAMERAS[i].loc;document.getElementById('lb').classList.add('open');lbIdx=i;}
