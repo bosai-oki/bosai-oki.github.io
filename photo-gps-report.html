@@ -670,6 +670,15 @@ let selIdx = null;
 let reportMap = null;
 let reportMarker = null;
 
+// 報告日のデフォルトを今日の日付に設定
+(function() {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth()+1).padStart(2,'0');
+  const d = String(today.getDate()).padStart(2,'0');
+  document.getElementById('f-date').value = `${y}/${m}/${d}`;
+})();
+
 // ======================
 // INLINE EXIF PARSER (no CDN)
 // ======================
@@ -862,10 +871,7 @@ async function handleFiles(files) {
       entry.origGps = { ...gps }; // preserve original for reset
       entry.utm = toUTM(gps.lat, gps.lng);
       entry.status = 'ok';
-      const dt = exif?.DateTimeOriginal || exif?.DateTime;
-      if (dt && !document.getElementById('f-date').value) {
-        document.getElementById('f-date').value = dt.replace(':', '/').replace(':', '/').split(' ')[0];
-      }
+      // 報告日は自動上書きしない（デフォルト：今日の日付）
       // Reverse geocode
       entry.address = '取得中…';
       renderItem(idx);
@@ -1401,7 +1407,19 @@ async function downloadImage() {
   // ── SAVE ──
   const dateStr=(dateVal||new Date().toISOString().slice(0,10)).replace(/\//g,'-');
   const fname=`${title.replace(/[\\/:*?"<>|]/g,'_')}_${dateStr}.jpg`;
-  cvs.toBlob(blob=>{
+  cvs.toBlob(async blob=>{
+    // iOS Safari: Web Share API で写真ライブラリへ保存
+    const file = new File([blob], fname, { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: fname });
+        return;
+      } catch(e) {
+        // キャンセルされた場合は通常ダウンロードにフォールバック
+        if (e.name === 'AbortError') return;
+      }
+    }
+    // Android / PC: 通常ダウンロード
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     a.href=url; a.download=fname; a.click();
