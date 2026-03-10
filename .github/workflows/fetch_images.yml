@@ -120,16 +120,24 @@ jobs:
               items = data.get('items', [])
               return items[0]['id'] if items else None
 
-          def get_live_video_id(channel_id):
+          def get_live_video_id(channel_id, title_keywords=None):
               data = yt_api('search', {
-                  'part': 'id',
+                  'part': 'id,snippet',
                   'channelId': channel_id,
                   'eventType': 'live',
                   'type': 'video',
-                  'maxResults': 1
+                  'maxResults': 10
               })
               items = data.get('items', [])
-              return items[0]['id']['videoId'] if items else None
+              if not items:
+                  return None
+              if title_keywords:
+                  for item in items:
+                      title = item.get('snippet', {}).get('title', '')
+                      if any(kw in title for kw in title_keywords):
+                          return item['id']['videoId']
+                  return None  # キーワード一致なし
+              return items[0]['id']['videoId']
 
           # チャンネルのみのカメラ（動画IDが定期的に変わるもの）
           CHANNEL_CAMERAS = [
@@ -146,6 +154,8 @@ jobs:
               {'name': '沖縄県島尻郡ライブ',             'loc': '島尻郡南風原町', 'handle': '沖縄県島尻郡ライブ'},
               {'name': '与那原ライブ',                   'loc': '島尻郡与那原町', 'handle': '与那原ライブ'},
               {'name': 'うるま市州崎ライブカメラ',         'loc': 'うるま市洲崎',   'handle': 'うるま市州崎ライブカメラ'},
+              {'name': '那覇空港（日テレNews）',          'loc': '那覇市鏡水',     'handle': 'ntv_news',
+               'title_keywords': ['那覇', '沖縄', '空港', 'なは', 'Naha']},
           ]
 
           youtube_live = []
@@ -155,7 +165,7 @@ jobs:
                   if not channel_id:
                       channel_id = get_channel_id(cam['handle'])
                   if channel_id:
-                      video_id = get_live_video_id(channel_id)
+                      video_id = get_live_video_id(channel_id, cam.get('title_keywords'))
                       youtube_live.append({
                           'name': cam['name'],
                           'loc': cam['loc'],
