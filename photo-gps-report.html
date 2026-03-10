@@ -849,12 +849,8 @@ async function handleFiles(files) {
     const entry = { file, name: file.name, thumbURL: null, gps: null, exif: null, status: 'load' };
     photos.push(entry);
 
-    // Thumbnail
-    await new Promise(resolve => {
-      const r = new FileReader();
-      r.onload = ev => { entry.thumbURL = ev.target.result; resolve(); };
-      r.readAsDataURL(file.slice(0, 500*1024));
-    });
+    // Thumbnail (createObjectURL for iOS Safari compatibility)
+    entry.thumbURL = URL.createObjectURL(file);
     renderItem(idx);
 
     // EXIF
