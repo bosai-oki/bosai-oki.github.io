@@ -284,7 +284,7 @@ footer{background:var(–deep);border-top:1px solid var(–edge);padding:5px 14p
   </div>
 </header>
 
-<div class="fetch-bar" id="fetch-bar">
+<div class="fetch-bar" id="fetch-bar" style="display:none">
   <span class="pulse"></span>
   <span class="fb-label">最終取得（JST）:</span>
   <span class="fb-val" id="fb-time">読込中…</span>
@@ -973,16 +973,20 @@ const AREA_NAMES={
 
 let bousaiInfoLoaded=false;
 async function loadBousaiInfo(){
-  // 警報
+  // GitHub Actionsが生成したwarning.jsonから取得
   try{
-    const res=await fetch('https://www.jma.go.jp/bosai/warning/data/warning/471000.json');
+    const res=await fetch('warning.json?t='+Date.now());
     if(!res.ok) throw new Error('HTTP '+res.status);
     const data=await res.json();
-    renderWarnings(data);
+    if(data.warnings) renderWarnings(data.warnings);
+    if(data.typhoons !== undefined) renderTyphoon(data.typhoons);
+    const updated=document.getElementById('warning-updated');
+    if(updated && data.fetched_jst) updated.textContent='（'+data.fetched_jst+' 取得）';
   }catch(e){
+    // warning.jsonがまだない場合はリンクのみ表示
     document.getElementById('warning-area').innerHTML=`
       <div style="grid-column:1/-1;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:14px 16px">
-        <div style="font-size:12px;color:var(--amber);margin-bottom:8px;font-family:var(--mono)">⚠ 警報情報を直接取得できませんでした（ネットワーク制限の可能性）</div>
+        <div style="font-size:12px;color:var(--amber);margin-bottom:8px;font-family:var(--mono)">⚠ 警報データ未取得（Actions実行後に反映されます）</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
           <a class="ext-link" href="https://www.jma.go.jp/bosai/warning/#area_type=offices&area_code=471000" target="_blank">
             <span class="ext-link-name">気象庁 沖縄県の警報・注意報</span><span class="ext-link-arr">↗</span>
@@ -992,14 +996,6 @@ async function loadBousaiInfo(){
           </a>
         </div>
       </div>`;
-  }
-  // 台風
-  try{
-    const res=await fetch('https://www.jma.go.jp/bosai/typhoon/data/alltyphoon.json');
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data=await res.json();
-    renderTyphoon(data);
-  }catch(e){
     document.getElementById('typhoon-area').innerHTML=`
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <a class="ext-link" href="https://www.jma.go.jp/bosai/typhoon/" target="_blank">
@@ -1009,28 +1005,22 @@ async function loadBousaiInfo(){
   }
 }
 
-function renderWarnings(data){
+function renderWarnings(warningData){
   const el=document.getElementById('warning-area');
-  // JMA APIの構造: areaTypes[0]=地方, areaTypes[1]=府県, areaTypes[2]=市町村
-  let areas=[];
-  if(data.areaTypes){
-    // 市町村レベルを優先、なければ府県レベル
-    const at=data.areaTypes.find(t=>t.areas&&t.areas.some(a=>(a.warnings||[]).some(w=>w.status==='発表')));
-    if(at) areas=at.areas||[];
-  }
-  const active=areas.filter(a=>(a.warnings||[]).some(w=>w.status==='発表'));
+  // warningData = [{area_name, warnings:[{type, status}]}]
+  const active=(warningData||[]).filter(a=>(a.warnings||[]).some(w=>w.status==='発表'));
   if(!active.length){
     el.innerHTML=`<div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:14px 16px;display:flex;align-items:center;gap:10px;grid-column:1/-1">
       <span style="font-size:22px">✅</span>
       <div>
         <div style="font-size:13px;font-weight:700;color:#4ade80">現在、沖縄県内に発表中の警報・注意報はありません</div>
-        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">気象庁（${new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})} 現在）</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:3px">気象庁（<span id="warning-updated"></span>）</div>
       </div>
     </div>`;
     return;
   }
   el.innerHTML=active.map(area=>{
-    const name=area.name||AREA_NAMES[area.code]||area.code||'';
+    const name=area.area_name||'';
     const items=(area.warnings||[]).filter(w=>w.status==='発表').map(w=>{
       const col=WARNING_COLORS[w.type]||(w.type.includes('特別警報')?'#ff0000':w.type.includes('警報')?'#f97316':'#fbbf24');
       return `<span style="display:inline-block;background:${col}22;border:1px solid ${col}66;color:${col};font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:4px;margin:2px">${w.type}</span>`;
