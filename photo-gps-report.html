@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>現地調査レポート生成ツール</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="anonymous"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin="anonymous"></script>
+
+<style>
+/* ===== BASE ===== */
+:root {
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --border: #d4d9e1;
+  --border2: #e8eaed;
+  --accent: #1a56db;
+  --accent2: #0f3a8a;
+  --text: #1a202c;
+  --text2: #4a5568;
+  --dim: #a0aec0;
+  --green: #22863a;
+  --red: #c0392b;
+  --mark: #fff3cd;
+  --sans: 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', sans-serif;
+  --serif: 'Hiragino Mincho ProN', 'Yu Mincho', 'MS PMincho', serif;
+  --mono: 'Menlo', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; min-height: 100vh; }
+
+/* ===== SCREEN UI ===== */
+@media screen {
+  .report-page { display: none; }
+
+  .app-header {
+    background: var(--accent2);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .app-header .icon { font-size: 22px; }
+  .app-header h1 { font-size: 16px; font-weight: 700; letter-spacing: .03em; }
+  .app-header .sub { font-size: 11px; opacity: .7; margin-top: 2px; font-family: var(--mono); }
+
+  .app-body {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  @media (max-width: 860px) { .app-body { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+
+  .card-head {
+    padding: 10px 16px;
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text2);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* Drop zone */
+  .drop-zone {
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    border-bottom: 1px solid var(--border2);
+    transition: background .2s;
+  }
+  .drop-zone.over { background: #eef3ff; }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+  .drop-label { font-size: 14px; color: var(--text); margin-bottom: 4px; font-weight: 500; }
+  .drop-hint { font-size: 11px; color: var(--dim); font-family: var(--mono); }
+  .drop-btn { display: inline-block; margin-top: 12px; padding: 7px 20px; background: var(--accent); border-radius: 6px; color: #fff; font-size: 12px; font-weight: 700; pointer-events: none; }
+  .drop-zone:hover .drop-btn { background: var(--accent2); }
+
+  /* Photo list */
+  .photo-list { max-height: 300px; overflow-y: auto; }
+  .photo-list::-webkit-scrollbar { width: 4px; }
+  .photo-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .photo-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; cursor: pointer;
+    border-bottom: 1px solid var(--border2);
+    transition: background .15s;
+  }
+  .photo-item:hover { background: #f0f4ff; }
+  .photo-item.active { background: #e8f0fe; border-left: 3px solid var(--accent); }
+  .photo-item .thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
+  .pinfo { flex: 1; min-width: 0; }
+  .pname { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pstatus { font-size: 10px; font-family: var(--mono); margin-top: 2px; }
+  .s-ok { color: var(--green); }
+  .s-none { color: var(--dim); }
+  .s-load { color: var(--accent); }
+  .pdel { background: none; border: none; color: var(--dim); cursor: pointer; padding: 4px; border-radius: 4px; font-size: 13px; }
+  .caption-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--border2);
+    border-top: none;
+    border-radius: 0 0 0 0;
+    font-size: 11px;
+    font-family: var(--sans);
+    color: var(--text);
+    background: #fafbfc;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .caption-input:focus { border-color: var(--accent); background: #fff; }
+  .caption-input::placeholder { color: var(--dim); }
+  .photo-item-wrap { border-bottom: 1px solid var(--border2); }
+  .photo-item-wrap .photo-item { border-bottom: none; }
+
+  /* Report form */
+  .form-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border2); }
+  .form-row { display: flex; flex-direction: column; gap: 4px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--text2); }
+  .form-input {
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: var(--sans);
+    color: var(--text);
+    background: #fff;
+    transition: border-color .2s;
+    width: 100%;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,86,219,.1); }
+  textarea.form-input { resize: vertical; min-height: 70px; }
+
+  .gen-btn {
+    margin: 14px 16px;
+    padding: 11px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all .2s;
+    box-shadow: 0 2px 8px rgba(26,86,219,.3);
+  }
+  .gen-btn:hover { background: var(--accent2); box-shadow: 0 4px 12px rgba(26,86,219,.4); transform: translateY(-1px); }
+  .gen-btn:disabled { background: var(--dim); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Preview */
+  .preview-wrap {
+    background: #e8eaed;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 500px;
+    align-items: flex-start;
+  }
+  .preview-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 400px;
+    color: var(--dim);
+    font-size: 13px;
+    gap: 10px;
+  }
+  .preview-empty .bi { font-size: 36px; }
+
+  #reportPreview {
+    width: 210mm;
+    transform-origin: top center;
+  }
+
+  .print-btn {
+    margin: 0 0 12px;
+    padding: 10px 24px;
+    background: #22863a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all .2s;
+  }
+  .print-btn:hover { background: #1a6b2e; }
+  .preview-controls { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; justify-content: center; }
+
+  /* No GPS warning */
+  .adj-card { display: none; }
+  .adj-card.visible { display: block; }
+  #adjMap { height: 200px; width: 100%; }
+  .adj-coords {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--border2);
+  }
+  .adj-hint {
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text2);
+    background: #f0f4ff;
+    border-bottom: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .adj-btn-row {
+    padding: 8px 12px 12px;
+    display: flex;
+    gap: 8px;
+  }
+  .adj-apply {
+    flex: 1;
+    padding: 8px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--sans);
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .adj-apply:hover { background: var(--accent2); }
+  .adj-reset {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 12px;
+    font-family: var(--sans);
+    cursor: pointer;
+  }
+  .adj-reset:hover { border-color: var(--accent); color: var(--accent); }
+  .adj-status {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--green);
+    padding: 0 12px 8px;
+    display: none;
+  }
+  .adj-photo-sel {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border2);
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .adj-photo-sel select {
+    flex: 1;
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-size: 11px;
+    background: #fff;
+    color: var(--text);
+  }
+}
+
+/* ===== REPORT PAGE (screen preview + print) ===== */
+.report-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: #fff;
+  font-family: var(--sans);
+  color: #1a1a1a;
+  font-size: 11pt;
+  position: relative;
+  box-shadow: 0 4px 24px rgba(0,0,0,.15);
+}
+
+/* Header stripe */
+.rp-header {
+  background: #0f3a8a;
+  color: #fff;
+  padding: 14px 20px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.rp-org { font-size: 9pt; opacity: .8; margin-bottom: 4px; letter-spacing: .05em; }
+.rp-title-main { font-size: 16pt; font-weight: 700; font-family: var(--serif); letter-spacing: .05em; }
+.rp-doc-info { text-align: right; font-size: 8.5pt; opacity: .9; line-height: 1.9; font-family: var(--sans); }
+
+/* Coords section */
+.rp-body { padding: 16px 20px 20px; }
+
+/* Photo compact row */
+.rp-photo-compact-row { margin-bottom: 10px; }
+.rp-photo-compact-row .rp-photo-box { border: 1px solid #d4d9e1; border-radius: 4px; overflow: hidden; }
+.rp-photo-compact-row .rp-photo-img { width: 100%; height: 140px; object-fit: cover; display: block; }
+
+/* Photo grid (1–4 photos) */
+.pg-grid { display: grid; gap: 6px; margin-bottom: 10px; }
+.pg-cell { border: 1px solid #d4d9e1; border-radius: 4px; overflow: hidden; }
+.pg-label { background: #f0f4ff; border-bottom: 1px solid #d4d9e1; padding: 3px 8px; font-size: 7.5pt; font-weight: 700; color: #4a6fa5; letter-spacing:.05em; }
+.pg-img { width: 100%; object-fit: cover; display: block; }
+.pg-caption { padding: 4px 8px 5px; font-size: 8pt; color: #333; background: #f7f9fc; border-top: 1px solid #e8ecf2; line-height: 1.4; font-family: var(--sans); }
+
+/* Map full-width */
+.rp-map-box { border: 1px solid #d4d9e1; border-radius: 4px; overflow: hidden; }
+.rp-map-inner { position: relative; background: #e8f0f8; }
+#reportMap { width: 100%; height: 100%; }
+
+.rp-img-label {
+  background: #f0f4ff;
+  border-bottom: 1px solid #d4d9e1;
+  padding: 4px 10px;
+  font-size: 8pt;
+  font-weight: 700;
+  color: #4a6fa5;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Coords section */
+.rp-section { margin-bottom: 12px; }
+.rp-sec-title {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #0f3a8a;
+  border-left: 3px solid #1a56db;
+  padding-left: 8px;
+  margin-bottom: 7px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.rp-coord-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.rp-coord-cell {
+  background: #f7f9fc;
+  border: 1px solid #d4d9e1;
+  border-radius: 4px;
+  padding: 7px 10px;
+}
+.rp-coord-label { font-size: 7.5pt; color: #4a6fa5; font-weight: 700; letter-spacing: .06em; margin-bottom: 3px; }
+.rp-coord-val { font-size: 10pt; font-weight: 700; color: #1a1a1a; font-family: var(--mono); }
+.rp-coord-val.sub { font-size: 8.5pt; color: #2d5aa0; }
+
+/* DMS row */
+.rp-dms-row {
+  background: #fff8e1;
+  border: 1px solid #f0d060;
+  border-radius: 4px;
+  padding: 7px 12px;
+  margin-top: 7px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rp-dms-label { font-size: 7.5pt; font-weight: 700; color: #7a5c00; min-width: 80px; }
+.rp-dms-val { font-size: 9.5pt; font-family: var(--mono); color: #3d2e00; font-weight: 600; }
+
+/* EXIF table */
+.rp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+}
+.rp-table th {
+  background: #0f3a8a;
+  color: #fff;
+  padding: 5px 10px;
+  text-align: left;
+  font-size: 8pt;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.rp-table td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #e8eaed;
+  vertical-align: top;
+}
+.rp-table tr:nth-child(even) td { background: #f7f9fc; }
+.rp-table .tkey { color: #4a6fa5; font-weight: 700; width: 120px; white-space: nowrap; }
+.rp-table .tval { color: #1a1a1a; }
+
+/* Remarks */
+.rp-remarks {
+  background: #f7f9fc;
+  border: 1px solid #d4d9e1;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 9.5pt;
+  min-height: 60px;
+  color: #1a1a1a;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* Footer */
+.rp-footer {
+  border-top: 2px solid #0f3a8a;
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8pt;
+  color: #4a6fa5;
+}
+
+/* ===== PRINT ===== */
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: none; }
+  .app-header, .app-body, .preview-controls { display: none !important; }
+  .report-page { display: block !important; box-shadow: none; margin: 0; width: 100%; }
+  #reportMap { display: none; }
+  .rp-map-canvas-print { display: block !important; }
+  @page { size: A4; margin: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== SCREEN APP ===== -->
+<div class="app-header">
+  <div class="icon">📋</div>
+  <div>
+    <h1>現地調査レポート生成ツール</h1>
+    <div class="sub">写真アップロード → 位置情報自動取得 → A4報告書出力</div>
+  </div>
+</div>
+
+<div class="app-body">
+  <!-- Left column -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-head"><span class="dot"></span>PHOTO UPLOAD</div>
+      <div class="drop-zone" id="dz">
+        <input type="file" id="fi" accept="image/*" multiple>
+        <span class="drop-icon">📷</span>
+        <div class="drop-label">写真をドロップ or クリック</div>
+        <div class="drop-hint">GPS付きJPG · 最大4枚まで</div>
+        <div class="drop-btn">ファイルを選択</div>
+      </div>
+      <div class="photo-list" id="plist"></div>
+    </div>
+
+    <!-- Position adjustment -->
+    <div class="card adj-card" id="adjCard">
+      <div class="card-head"><span class="dot" style="background:#e67e22;box-shadow:0 0 5px #e67e22"></span>📍 GPS位置を手動調整</div>
+      <div class="adj-hint">🖱 マーカーをドラッグして位置を修正 · ホイールでズーム</div>
+      <div class="adj-photo-sel">
+        <span>対象写真:</span>
+        <select id="adjPhotoSel" onchange="adjPhotoChanged()"></select>
+      </div>
+      <div id="adjMap"></div>
+      <div class="adj-coords">
+        <div class="form-row">
+          <label class="form-label">緯度 (Latitude)</label>
+          <input id="adj-lat" class="form-input" type="number" step="0.000001" style="font-family:var(--mono);font-size:12px;">
+        </div>
+        <div class="form-row">
+          <label class="form-label">経度 (Longitude)</label>
+          <input id="adj-lng" class="form-input" type="number" step="0.000001" style="font-family:var(--mono);font-size:12px;">
+        </div>
+      </div>
+      <div class="adj-btn-row">
+        <button class="adj-reset" onclick="adjReset()">↩ 元に戻す</button>
+        <button class="adj-apply" onclick="adjApply()">✓ この位置を適用</button>
+      </div>
+      <div class="adj-status" id="adjStatus">✓ 位置を更新しました</div>
+    </div>
+
+    <!-- Report settings -->
+    <div class="card">
+      <div class="card-head"><span class="dot"></span>レポート設定</div>
+      <div class="form-body">
+        <div class="form-row">
+          <label class="form-label">報告書タイトル</label>
+          <input id="f-title" class="form-input" type="text" placeholder="例：現地調査報告（○○地点）" value="現地調査報告書">
+        </div>
+        <div class="form-row">
+          <label class="form-label">機関・部署名</label>
+          <input id="f-org" class="form-input" type="text" placeholder="例：沖縄県知事公室消防防災対策課" value="">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-row">
+            <label class="form-label">担当者名</label>
+            <input id="f-name" class="form-input" type="text" placeholder="氏名">
+          </div>
+          <div class="form-row">
+            <label class="form-label">役職（任意）</label>
+            <input id="f-rank" class="form-input" type="text" placeholder="例：主査・主任など">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">報告日</label>
+          <input id="f-date" class="form-input" type="text" placeholder="自動取得（EXIFから）">
+        </div>
+        <div class="form-row">
+          <label class="form-label">調査番号 / 管理番号</label>
+          <input id="f-docno" class="form-input" type="text" placeholder="例：R06-001">
+        </div>
+        <div class="form-row">
+          <label class="form-label">備考・現地状況メモ</label>
+          <textarea id="f-note" class="form-input" placeholder="現地の状況、特記事項などを記入"></textarea>
+        </div>
+      </div>
+      <button class="gen-btn" id="genBtn" onclick="generateReport()" disabled>
+        📄 レポートを生成
+      </button>
+    </div>
+  </div>
+
+  <!-- Right: Preview -->
+  <div class="card">
+    <div class="card-head"><span class="dot"></span>プレビュー / 印刷</div>
+    <div id="previewArea">
+      <div class="preview-wrap">
+        <div class="preview-empty" id="previewEmpty">
+          <div class="bi">📋</div>
+          写真をアップして「レポートを生成」を押してください
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== REPORT PAGE (hidden on screen, shown in print) ===== -->
+<div class="report-page" id="reportPage" style="display:none;">
+  <!-- Header -->
+  <div class="rp-header">
+    <div>
+      <div class="rp-title-main" id="rp-title">現地調査報告書</div>
+    </div>
+    <div class="rp-doc-info">
+      <div id="rp-org-right">　</div>
+      <div id="rp-rank-right">　</div>
+      <div id="rp-reporter">　</div>
+      <div id="rp-docno">　</div>
+      <div id="rp-dateout">　</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="rp-body">
+
+    <!-- Photos (dynamic 1-4) -->
+    <div id="rp-photo-grid" style="margin-bottom:10px;"></div>
+    <div class="rp-map-box" style="margin-bottom:14px;">
+      <div class="rp-img-label">🗺 撮影位置（地図）</div>
+      <div class="rp-map-inner" style="height:240px;">
+        <div id="reportMap"></div>
+        <img id="rp-map-img" class="rp-map-canvas-print" style="display:none;width:100%;height:240px;object-fit:cover;" alt="地図">
+      </div>
+    </div>
+
+    <!-- Coordinates -->
+    <div class="rp-section">
+      <div class="rp-sec-title">位置情報 / Location Data</div>
+      <div class="rp-coord-grid">
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">緯度 (Lat)</div>
+          <div class="rp-coord-val" id="rc-lat">—</div>
+        </div>
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">経度 (Lng)</div>
+          <div class="rp-coord-val" id="rc-lng">—</div>
+        </div>
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">GPS高度</div>
+          <div class="rp-coord-val" id="rc-alt">—</div>
+        </div>
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">UTM Zone</div>
+          <div class="rp-coord-val sub" id="rc-utmzone">—</div>
+        </div>
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">UTM Easting</div>
+          <div class="rp-coord-val sub" id="rc-utme">—</div>
+        </div>
+        <div class="rp-coord-cell">
+          <div class="rp-coord-label">UTM Northing</div>
+          <div class="rp-coord-val sub" id="rc-utmn">—</div>
+        </div>
+        <div class="rp-coord-cell" style="grid-column:3/-1;">
+          <div class="rp-coord-label">住所 Address</div>
+          <div class="rp-coord-val" id="rc-addr" style="font-family:var(--sans);font-size:9pt;line-height:1.5;">—</div>
+        </div>
+      </div>
+      <div class="rp-dms-row">
+        <div class="rp-dms-label">度分秒 (DMS)</div>
+        <div class="rp-dms-val" id="rc-dms">—</div>
+      </div>
+    </div>
+
+    <!-- EXIF -->
+    <div class="rp-section">
+      <div class="rp-sec-title">撮影情報 / Camera EXIF</div>
+      <table class="rp-table" id="rp-exif-table">
+        <colgroup><col style="width:120px"><col><col style="width:120px"><col></colgroup>
+        <tbody id="rp-exif-body"></tbody>
+      </table>
+    </div>
+
+    <!-- Remarks -->
+    <div class="rp-section">
+      <div class="rp-sec-title">備考 / Remarks</div>
+      <div class="rp-remarks" id="rp-remarks">　</div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="rp-footer">
+    <div>
+      <div style="margin-bottom:4px;">このレポートは現地調査報告ツールにより自動生成されました</div>
+      <div style="font-family:var(--mono);">生成日時：<span id="rp-generated"></span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================
+// DATA
+// ======================
+const photos = [];
+let selIdx = null;
+let reportMap = null;
+let reportMarker = null;
+
+// ======================
+// INLINE EXIF PARSER (no CDN)
+// ======================
+async function parseEXIF(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try { resolve(new EXIFReader(ev.target.result).parse()); }
+      catch(e) { resolve(null); }
+    };
+    reader.readAsArrayBuffer(file.slice(0, 256 * 1024));
+  });
+}
+
+class EXIFReader {
+  constructor(buf) {
+    this.buf = buf;
+    this.v = new DataView(buf);
+    this.le = false;
+    this.ts = 0;
+  }
+  r16(o, abs){ const off = abs ? o : this.ts+o; return this.v.getUint16(off, this.le); }
+  r32(o, abs){ const off = abs ? o : this.ts+o; return this.v.getUint32(off, this.le); }
+  r8(o,  abs){ const off = abs ? o : this.ts+o; return this.v.getUint8(off); }
+  parse() {
+    const v = this.v;
+    if (v.getUint16(0, false) !== 0xFFD8) return null;
+    let pos = 2;
+    while (pos < this.buf.byteLength - 4) {
+      if (v.getUint8(pos) !== 0xFF) break;
+      const marker = v.getUint16(pos, false);
+      const segLen = v.getUint16(pos + 2, false);
+      if (marker === 0xFFE1) {
+        const sig = v.getUint32(pos + 4, false);
+        const nul = v.getUint16(pos + 8, false);
+        if (sig === 0x45786966 && nul === 0x0000) {
+          this.ts = pos + 10;
+          return this.parseTIFF();
+        }
+      }
+      if (segLen < 2) break;
+      pos += 2 + segLen;
+    }
+    return null;
+  }
+  parseTIFF() {
+    const bo = this.v.getUint16(this.ts, false);
+    this.le = (bo === 0x4949);
+    if (this.r16(2) !== 42) return null;
+    const ifd0 = this.r32(4);
+    const result = {};
+    this.parseIFD(ifd0, result);
+    return result;
+  }
+  parseIFD(off, out) {
+    const count = this.r16(off);
+    for (let i = 0; i < count; i++) {
+      const b = off + 2 + i * 12;
+      const tag  = this.r16(b);
+      const type = this.r16(b + 2);
+      const cnt  = this.r32(b + 4);
+      if      (tag === 0x8825) { out.gps    = this.parseGPS(this.r32(b + 8)); }
+      else if (tag === 0x8769) { this.parseIFD(this.r32(b + 8), out); }
+      else { this.readTag(tag, type, cnt, b + 8, out); }
+    }
+  }
+  parseGPS(off) {
+    const count = this.r16(off);
+    const g = {};
+    for (let i = 0; i < count; i++) {
+      const b = off + 2 + i * 12;
+      const tag = this.r16(b);
+      const cnt = this.r32(b + 4);
+      switch(tag) {
+        case 1: g.latRef = String.fromCharCode(this.r8(b + 8)); break;
+        case 3: g.lngRef = String.fromCharCode(this.r8(b + 8)); break;
+        case 2: case 4: {
+          const o = this.r32(b + 8);
+          const arr = [0,1,2].map(j => { const n=this.r32(o+j*8), d=this.r32(o+j*8+4); return d?n/d:0; });
+          if(tag===2) g.lat=arr; else g.lng=arr; break;
+        }
+        case 5: g.altRef = this.r8(b + 8); break;
+        case 6: { const o=this.r32(b+8); const n=this.r32(o),d=this.r32(o+4); g.alt=d?n/d:0; break; }
+        case 17: { const o=this.r32(b+8); const n=this.r32(o),d=this.r32(o+4); g.dir=d?n/d:null; break; }
+      }
+    }
+    if (!g.lat || !g.lng) return null;
+    const lat = g.lat[0]+g.lat[1]/60+g.lat[2]/3600;
+    const lng = g.lng[0]+g.lng[1]/60+g.lng[2]/3600;
+    return {
+      lat: g.latRef==='S' ? -lat : lat,
+      lng: g.lngRef==='W' ? -lng : lng,
+      alt: g.alt != null ? (g.altRef ? -g.alt : g.alt) : null,
+      dir: g.dir != null ? g.dir : null
+    };
+  }
+  readTag(tag, type, cnt, vBase, out) {
+    const MAP = {
+      0x010F:'Make', 0x0110:'Model', 0x0132:'DateTime',
+      0x9003:'DateTimeOriginal', 0x829A:'ExposureTime',
+      0x8827:'ISOSpeedRatings', 0x829D:'FNumber', 0x920A:'FocalLength'
+    };
+    const name = MAP[tag]; if (!name) return;
+    try {
+      if (type === 2) {
+        const o = cnt <= 4 ? vBase : this.r32(vBase);
+        let s = '';
+        for(let i=0;i<cnt-1;i++) s+=String.fromCharCode(this.r8(o+i));
+        out[name] = s.trim();
+      } else if (type === 3) { out[name] = this.r16(vBase); }
+        else if (type === 4) { out[name] = this.r32(vBase); }
+        else if (type === 5) {
+          const o=this.r32(vBase); const n=this.r32(o),d=this.r32(o+4);
+          out[name] = d ? n/d : 0;
+        }
+    } catch(e){}
+  }
+}
+
+function getGPS(exif) {
+  if (!exif || !exif.gps) return null;
+  return exif.gps;
+}
+
+function cvtDMS(dms, ref) {
+  if (!dms) return NaN;
+  const toNum = v => Array.isArray(v) ? v[0]/v[1] : v;
+  const d = toNum(dms[0]), m = toNum(dms[1]), s = toNum(dms[2]);
+  let dd = d + m/60 + s/3600;
+  if (ref === 'S' || ref === 'W') dd = -dd;
+  return dd;
+}
+
+function toDMS(deg, isLat) {
+  const abs = Math.abs(deg);
+  const d = Math.floor(abs);
+  const mf = (abs - d) * 60, mo = Math.floor(mf);
+  const s = ((mf - mo) * 60).toFixed(2);
+  const dir = isLat ? (deg >= 0 ? 'N' : 'S') : (deg >= 0 ? 'E' : 'W');
+  return `${d}°${mo}'${s}"${dir}`;
+}
+
+function toUTM(lat, lng) {
+  const a=6378137,f=1/298.257223563,e2=2*f-f*f,e_p2=e2/(1-e2),k0=.9996;
+  const zone=Math.floor((lng+180)/6)+1;
+  const lon0=((zone-1)*6-180+3)*Math.PI/180;
+  const phi=lat*Math.PI/180, lam=lng*Math.PI/180;
+  const N=a/Math.sqrt(1-e2*Math.sin(phi)**2);
+  const T=Math.tan(phi)**2, C=e_p2*Math.cos(phi)**2, A=Math.cos(phi)*(lam-lon0);
+  const e4=e2*e2,e6=e4*e2;
+  const M=a*((1-e2/4-3*e4/64-5*e6/256)*phi-(3*e2/8+3*e4/32+45*e6/1024)*Math.sin(2*phi)+(15*e4/256+45*e6/1024)*Math.sin(4*phi)-(35*e6/3072)*Math.sin(6*phi));
+  const x=k0*N*(A+(1-T+C)*A**3/6+(5-18*T+T*T+72*C-58*e_p2)*A**5/120)+500000;
+  let y=k0*(M+N*Math.tan(phi)*(A**2/2+(5-T+9*C+4*C*C)*A**4/24+(61-58*T+T*T+600*C-330*e_p2)*A**6/720));
+  if(lat<0)y+=10000000;
+  const band='CDEFGHJKLMNPQRSTUVWXX'[Math.min(Math.max(Math.floor((lat+80)/8),0),20)];
+  return {zone,band,e:Math.round(x),n:Math.round(y)};
+}
+
+// ======================
+// FILE HANDLING
+// ======================
+document.getElementById('fi').addEventListener('change', e => { handleFiles([...e.target.files]); e.target.value=''; });
+const dz = document.getElementById('dz');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  handleFiles([...e.dataTransfer.files].filter(f => f.type.startsWith('image/')));
+});
+
+async function handleFiles(files) {
+  const remaining = 4 - photos.length;
+  if (remaining <= 0) { alert('写真は最大4枚までです。'); return; }
+  files = files.slice(0, remaining);
+  for (const file of files) {
+    const idx = photos.length;
+    const entry = { file, name: file.name, thumbURL: null, gps: null, exif: null, status: 'load' };
+    photos.push(entry);
+
+    // Thumbnail
+    await new Promise(resolve => {
+      const r = new FileReader();
+      r.onload = ev => { entry.thumbURL = ev.target.result; resolve(); };
+      r.readAsDataURL(file.slice(0, 500*1024));
+    });
+    renderItem(idx);
+
+    // EXIF
+    const exif = await parseEXIF(file);
+    entry.exif = exif;
+    const gps = getGPS(exif);
+    if (gps) {
+      entry.gps = gps;
+      entry.origGps = { ...gps }; // preserve original for reset
+      entry.utm = toUTM(gps.lat, gps.lng);
+      entry.status = 'ok';
+      const dt = exif?.DateTimeOriginal || exif?.DateTime;
+      if (dt && !document.getElementById('f-date').value) {
+        document.getElementById('f-date').value = dt.replace(':', '/').replace(':', '/').split(' ')[0];
+      }
+      // Reverse geocode
+      entry.address = '取得中…';
+      renderItem(idx);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${gps.lat}&lon=${gps.lng}&accept-language=ja`,
+          { headers: { 'User-Agent': 'bosai-oki-gps-report/1.0 (okinawa-pref-disaster-tool)' } });
+        const d = await res.json();
+        entry.address = d.display_name || '—';
+      } catch { entry.address = '（住所取得失敗）'; }
+    } else {
+      entry.status = 'none';
+    }
+    renderItem(idx);
+    document.getElementById('genBtn').disabled = !photos.some(p => p.status === 'ok');
+    // Show/refresh adj card when a GPS photo is available
+    if (photos.some(p => p.gps)) showAdjCard();
+  }
+}
+
+// ======================
+// PHOTO LIST
+// ======================
+function renderItem(idx) {
+  const e = photos[idx];
+  const list = document.getElementById('plist');
+  let el = document.getElementById(`pi-wrap-${idx}`);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = `pi-wrap-${idx}`;
+    el.className = 'photo-item-wrap';
+    list.appendChild(el);
+  }
+  const prevCap = document.getElementById(`cap-${idx}`)?.value || '';
+  el.classList.toggle('active', selIdx === idx);
+  const st = e.status === 'ok'
+    ? '<span class="pstatus s-ok">✓ GPS取得済み</span>'
+    : e.status === 'none'
+    ? '<span class="pstatus s-none">⊘ GPS情報なし</span>'
+    : '<span class="pstatus s-load">… 解析中</span>';
+  el.innerHTML = `
+    <div class="photo-item" id="pi-${idx}" onclick="selectPhoto(${idx})" style="border-bottom:none;">
+      <img class="thumb" src="${e.thumbURL||''}" alt="">
+      <div class="pinfo"><div class="pname" title="${e.name}">${e.name}</div>${st}</div>
+      <button class="pdel" onclick="delPhoto(event,${idx})">✕</button>
+    </div>
+    <input class="caption-input" id="cap-${idx}" type="text"
+      placeholder="📝 写真 ${idx+1} のキャプション（任意）" value="${prevCap}">`;
+}
+
+function delPhoto(ev, idx) {
+  ev.stopPropagation();
+  photos.splice(idx, 1);
+  document.getElementById('plist').innerHTML = '';
+  photos.forEach((_, i) => renderItem(i));
+  if (selIdx === idx) selIdx = null;
+  else if (selIdx > idx) selIdx--;
+  document.getElementById('genBtn').disabled = !photos.some(p => p.status === 'ok');
+}
+
+function selectPhoto(idx) {
+  selIdx = idx;
+  photos.forEach((_, i) => { const el = document.getElementById(`pi-${i}`); if(el) el.classList.toggle('active', i===idx); });
+}
+
+// ======================
+// POSITION ADJUSTMENT
+// ======================
+let adjMap = null;
+let adjMarker = null;
+let adjTargetIdx = 0; // index into GPS photos
+
+function showAdjCard() {
+  const gpsPhotos = photos.filter(p => p.gps);
+  if (!gpsPhotos.length) return;
+  document.getElementById('adjCard').classList.add('visible');
+  // Populate select
+  const sel = document.getElementById('adjPhotoSel');
+  sel.innerHTML = photos.map((p, i) =>
+    p.gps ? `<option value="${i}">${p.name}</option>` : ''
+  ).join('');
+  adjTargetIdx = parseInt(sel.value);
+  initAdjMap();
+}
+
+function adjPhotoChanged() {
+  adjTargetIdx = parseInt(document.getElementById('adjPhotoSel').value);
+  const p = photos[adjTargetIdx];
+  if (!p?.gps || !adjMarker) return;
+  const ll = [p.gps.lat, p.gps.lng];
+  adjMarker.setLatLng(ll);
+  adjMap.setView(ll, adjMap.getZoom());
+  document.getElementById('adj-lat').value = p.gps.lat.toFixed(7);
+  document.getElementById('adj-lng').value = p.gps.lng.toFixed(7);
+  document.getElementById('adjStatus').style.display = 'none';
+}
+
+function initAdjMap() {
+  if (adjMap) { adjMap.remove(); adjMap = null; }
+  const p = photos[adjTargetIdx];
+  if (!p?.gps) return;
+
+  adjMap = L.map('adjMap', { zoomControl: true, attributionControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adjMap);
+  adjMap.setView([p.gps.lat, p.gps.lng], 16);
+
+  // Draggable marker
+  const icon = L.divIcon({
+    className: '',
+    html: `<div style="width:20px;height:20px;background:#e67e22;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:grab;"></div>`,
+    iconSize: [20, 20], iconAnchor: [10, 10]
+  });
+  adjMarker = L.marker([p.gps.lat, p.gps.lng], { icon, draggable: true }).addTo(adjMap);
+
+  document.getElementById('adj-lat').value = p.gps.lat.toFixed(7);
+  document.getElementById('adj-lng').value = p.gps.lng.toFixed(7);
+
+  adjMarker.on('drag', e => {
+    const ll = e.target.getLatLng();
+    document.getElementById('adj-lat').value = ll.lat.toFixed(7);
+    document.getElementById('adj-lng').value = ll.lng.toFixed(7);
+    document.getElementById('adjStatus').style.display = 'none';
+  });
+
+  // Allow lat/lng input → move marker
+  ['adj-lat', 'adj-lng'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const lat = parseFloat(document.getElementById('adj-lat').value);
+      const lng = parseFloat(document.getElementById('adj-lng').value);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        adjMarker.setLatLng([lat, lng]);
+        adjMap.panTo([lat, lng]);
+      }
+    });
+  });
+
+  adjMap.invalidateSize();
+}
+
+async function adjApply() {
+  const lat = parseFloat(document.getElementById('adj-lat').value);
+  const lng = parseFloat(document.getElementById('adj-lng').value);
+  if (isNaN(lat) || isNaN(lng)) { alert('緯度・経度を確認してください'); return; }
+
+  const p = photos[adjTargetIdx];
+  const prevAlt = p.gps?.alt ?? null;
+  const prevDir = p.gps?.dir ?? null;
+
+  // Update GPS
+  p.gps = { lat, lng, alt: prevAlt, dir: prevDir };
+  p.utm = toUTM(lat, lng);
+
+  // Re-geocode
+  p.address = '住所取得中…';
+  const st = document.getElementById('adjStatus');
+  st.textContent = '住所を取得中…';
+  st.style.color = 'var(--text2)';
+  st.style.display = 'block';
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=ja`,
+      { headers: { 'User-Agent': 'bosai-oki-gps-report/1.0 (okinawa-pref-disaster-tool)' } });
+    const d = await res.json();
+    p.address = d.display_name || '—';
+  } catch { p.address = '（住所取得失敗）'; }
+
+  st.textContent = '✓ 位置を更新しました。レポートを再生成してください。';
+  st.style.color = 'var(--green)';
+  document.getElementById('genBtn').disabled = false;
+}
+
+function adjReset() {
+  const p = photos[adjTargetIdx];
+  if (!p?.origGps) return;
+  p.gps = { ...p.origGps };
+  p.utm = toUTM(p.origGps.lat, p.origGps.lng);
+  adjMarker.setLatLng([p.origGps.lat, p.origGps.lng]);
+  adjMap.setView([p.origGps.lat, p.origGps.lng], 16);
+  document.getElementById('adj-lat').value = p.origGps.lat.toFixed(7);
+  document.getElementById('adj-lng').value = p.origGps.lng.toFixed(7);
+  const st = document.getElementById('adjStatus');
+  st.textContent = '↩ 元の位置に戻しました';
+  st.style.color = 'var(--text2)';
+  st.style.display = 'block';
+}
+
+// ======================
+// GENERATE REPORT
+// ======================
+async function generateReport() {
+  // Pick photo: selected if GPS, else first GPS photo
+  let idx = selIdx !== null && photos[selIdx]?.gps ? selIdx : photos.findIndex(p => p.gps);
+  if (idx < 0) { alert('GPS情報のある写真が必要です。'); return; }
+  const e = photos[idx];
+  const { lat, lng, alt } = e.gps;
+  const utm = e.utm;
+  const ex = e.exif || {};
+
+  // Fill header
+  document.getElementById('rp-title').textContent = document.getElementById('f-title').value || '現地調査報告書';
+  const reporter = document.getElementById('f-name').value;
+  const rank     = document.getElementById('f-rank').value;
+  const org      = document.getElementById('f-org').value;
+  const docno    = document.getElementById('f-docno').value;
+  const dateVal  = document.getElementById('f-date').value;
+  document.getElementById('rp-org-right').textContent  = org      || '　';
+  document.getElementById('rp-rank-right').textContent = rank     || '　';
+  document.getElementById('rp-reporter').textContent   = reporter || '　';
+  document.getElementById('rp-docno').textContent      = docno    ? '文書番号：' + docno : '　';
+  document.getElementById('rp-dateout').textContent    = dateVal  ? '報告日：' + dateVal  : '　';
+
+  // EXIF values (from first GPS photo)
+  const dtStr = ex.DateTimeOriginal || ex.DateTime || dateVal || '—';
+
+  // ── Photo grid (1-4 photos) ──
+  const allPhotos = photos.filter(p => p.thumbURL).slice(0, 4);
+  // attach original index so we can read caption input
+  photos.forEach((p, i) => { if (p.thumbURL) p._origIdx = i; });
+  const allPhotosWithIdx = photos.filter(p => p.thumbURL).slice(0, 4);
+  const n = allPhotosWithIdx.length;
+  const gridEl = document.getElementById('rp-photo-grid');
+
+  const imgH = n <= 1 ? 155 : n <= 2 ? 145 : 105;
+  const gridStyle = n === 1 ? 'grid-template-columns:1fr;' : 'grid-template-columns:1fr 1fr;';
+
+  let cellsHTML = '';
+  allPhotosWithIdx.forEach((p, i) => {
+    const rawIdx = photos.indexOf(p);
+    const cap = document.getElementById(`cap-${rawIdx}`)?.value.trim() || '';
+    const label = n === 1 ? '📷 現地写真' : `📷 写真 ${i+1}`;
+    const spanStyle = (n === 3 && i === 2) ? 'grid-column:1/-1;' : '';
+    cellsHTML += `
+      <div class="pg-cell" style="${spanStyle}">
+        <div class="pg-label">${label}</div>
+        <img class="pg-img" src="${p.thumbURL}" style="height:${imgH}px;" alt="">
+        ${cap ? `<div class="pg-caption">${cap}</div>` : ''}
+      </div>`;
+  });
+  gridEl.innerHTML = `<div class="pg-grid" style="${gridStyle}">${cellsHTML}</div>`;
+
+  // Coord cells
+  document.getElementById('rc-lat').textContent = lat.toFixed(8);
+  document.getElementById('rc-lng').textContent = lng.toFixed(8);
+  document.getElementById('rc-alt').textContent = alt != null ? alt.toFixed(2) + ' m' : '—';
+  document.getElementById('rc-utmzone').textContent = `${utm.zone}${utm.band}`;
+  document.getElementById('rc-utme').textContent = utm.e.toLocaleString();
+  document.getElementById('rc-utmn').textContent = utm.n.toLocaleString();
+  document.getElementById('rc-dms').textContent = `${toDMS(lat,true)}　${toDMS(lng,false)}`;
+
+  // Address
+  document.getElementById('rc-addr').textContent = e.address || '—';
+
+  // EXIF table（撮影日時・方角のみ）
+  const dirVal = e.gps?.dir != null ? e.gps.dir.toFixed(1) + '°' : '—';
+  const exifRows = [
+    ['撮影日時', dtStr, '方角 (Direction)', dirVal],
+  ];
+  document.getElementById('rp-exif-body').innerHTML = exifRows.map(row =>
+    `<tr><td class="tkey">${row[0]}</td><td class="tval">${row[1]}</td><td class="tkey">${row[2]}</td><td class="tval">${row[3]}</td></tr>`
+  ).join('');
+
+  // Remarks
+  document.getElementById('rp-remarks').textContent = document.getElementById('f-note').value || '　';
+  document.getElementById('rp-generated').textContent = new Date().toLocaleString('ja-JP');
+
+  // Show report page for map init
+  document.getElementById('reportPage').style.display = 'block';
+
+  // Init Leaflet map
+  setTimeout(() => {
+    if (reportMap) { reportMap.remove(); reportMap = null; }
+    document.getElementById('reportMap').style.height = '240px';
+    reportMap = L.map('reportMap', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(reportMap);
+    reportMap.setView([lat, lng], 15);
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:16px;height:16px;background:#d32f2f;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>`,
+      iconSize: [16,16], iconAnchor:[8,8]
+    });
+    L.marker([lat, lng], { icon }).addTo(reportMap);
+    reportMap.invalidateSize();
+  }, 100);
+
+  // Show preview
+  showPreview();
+}
+
+function showPreview() {
+  const area = document.getElementById('previewArea');
+  const page = document.getElementById('reportPage');
+
+  area.innerHTML = '';
+
+  const controls = document.createElement('div');
+  controls.className = 'preview-controls';
+  controls.innerHTML = `
+    <button class="print-btn" onclick="window.print()">🖨️ 印刷 / PDF保存</button>
+    <button class="print-btn" style="background:#1565c0;" onclick="downloadImage()">📥 JPEG保存</button>
+  `;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'preview-wrap';
+  wrap.style.padding = '16px';
+  wrap.appendChild(page);
+
+  // Scale to fit preview width
+  const scalePreview = () => {
+    const avail = wrap.clientWidth - 32;
+    const pageW = 210 * 3.779527; // mm to px (96dpi)
+    const scale = Math.min(1, avail / pageW);
+    page.style.transform = `scale(${scale})`;
+    page.style.transformOrigin = 'top center';
+    page.style.marginBottom = `-${pageW * (1-scale)}px`;
+  };
+
+  area.appendChild(controls);
+  area.appendChild(wrap);
+
+  setTimeout(() => {
+    scalePreview();
+    window.addEventListener('resize', scalePreview);
+  }, 50);
+
+  document.getElementById('previewEmpty') && document.getElementById('previewEmpty').remove();
+}
+
+// ======================
+// JPEG EXPORT (Canvas直接描画・CDN不要)
+// ======================
+async function downloadImage() {
+  const idx = photos.findIndex(p => p.gps);
+  if (idx < 0) { alert('先にレポートを生成してください'); return; }
+  const entry = photos[idx];
+  const { lat, lng, alt } = entry.gps;
+  const utm = entry.utm;
+  const ex = entry.exif || {};
+
+  const title    = document.getElementById('f-title').value || '現地調査報告書';
+  const org      = document.getElementById('f-org').value || '';
+  const reporter = document.getElementById('f-name').value || '';
+  const rank     = document.getElementById('f-rank').value || '';
+  const dateVal  = document.getElementById('f-date').value || '';
+  const docno    = document.getElementById('f-docno').value || '';
+  const note     = document.getElementById('f-note').value || '';
+  const dtStr    = ex.DateTimeOriginal || ex.DateTime || dateVal || '—';
+  const dirVal   = entry.gps.dir != null ? entry.gps.dir.toFixed(1)+'°' : '—';
+  const address  = entry.address || '—';
+
+  // A4 @ 150dpi
+  const W = 1240, H = 1754;
+  const cvs = document.createElement('canvas');
+  cvs.width = W; cvs.height = H;
+  const c = cvs.getContext('2d');
+  const S = W / 794; // scale factor
+
+  const SANS  = '"Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif';
+  const SERIF = '"Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif';
+  const MONO  = '"Menlo","Courier New",monospace';
+  const fpx = pt => Math.round(pt * S * 1.5625);
+
+  const fillR   = (x,y,w,h,col) => { c.fillStyle=col; c.fillRect(x*S,y*S,w*S,h*S); };
+  const strokeR = (x,y,w,h,col,lw=1) => { c.strokeStyle=col; c.lineWidth=lw*S; c.strokeRect((x+lw/2)*S,(y+lw/2)*S,(w-lw)*S,(h-lw)*S); };
+  const hline   = (x1,y,x2,col,lw=1) => { c.strokeStyle=col; c.lineWidth=lw*S; c.beginPath(); c.moveTo(x1*S,y*S); c.lineTo(x2*S,y*S); c.stroke(); };
+  const vline   = (x,y1,y2,col,lw=1) => { c.strokeStyle=col; c.lineWidth=lw*S; c.beginPath(); c.moveTo(x*S,y1*S); c.lineTo(x*S,y2*S); c.stroke(); };
+
+  const txt  = (s,x,y,fam,pt,col,align='left',mxW) => {
+    c.font=`${fpx(pt)}px ${fam}`; c.fillStyle=col; c.textAlign=align; c.textBaseline='top';
+    mxW ? c.fillText(String(s??'—'),x*S,y*S,mxW*S) : c.fillText(String(s??'—'),x*S,y*S);
+  };
+  const btxt = (s,x,y,fam,pt,col,align='left',mxW) => {
+    c.font=`bold ${fpx(pt)}px ${fam}`; c.fillStyle=col; c.textAlign=align; c.textBaseline='top';
+    mxW ? c.fillText(String(s??'—'),x*S,y*S,mxW*S) : c.fillText(String(s??'—'),x*S,y*S);
+  };
+
+  // White bg
+  fillR(0,0,794,H/S,'#ffffff');
+
+  // ── HEADER ──
+  fillR(0,0,794,72,'#0f3a8a');
+  btxt(title,20,12,SERIF,16,'#ffffff');
+  // Right side: org / rank / reporter / docno / 報告日
+  const rightLines=[org,rank,reporter,docno?'文書番号：'+docno:'',dateVal?'報告日：'+dateVal:''].filter(Boolean);
+  c.textAlign='right';
+  rightLines.forEach((ln,i)=>txt(ln,774,8+i*12,i===0?SANS:SANS,i===0?9:8,
+    i<3?'rgba(255,255,255,0.95)':'rgba(255,255,255,0.75)','right'));
+  c.textAlign='left';
+  let y=76;
+
+  // ── PHOTOS (1-4枚グリッド) ──
+  const allPhotos = photos.filter(p => p.thumbURL).slice(0, 4);
+  const nP = allPhotos.length;
+  const photoRowH = nP <= 2 ? 145 : 105;
+  const labelH = 18;
+  const capH = 20; // caption bar height
+
+  async function drawPhotoCell(p, rawIdx, label, cx, cy, cw, ch) {
+    const cap = document.getElementById(`cap-${rawIdx}`)?.value.trim() || '';
+    const totalH = ch + labelH + (cap ? capH : 0);
+    fillR(cx, cy, cw, totalH, '#ffffff');
+    strokeR(cx, cy, cw, totalH, '#d4d9e1');
+    // label bar
+    fillR(cx, cy, cw, labelH, '#f0f4ff');
+    hline(cx, cy + labelH, cx + cw, '#d4d9e1');
+    btxt(label, cx + 8, cy + 4, SANS, 7.5, '#4a6fa5');
+    // photo
+    await new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const pw = cw * S, ph = ch * S;
+        const ar = img.width / img.height, car = pw / ph;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (ar > car) { sw = img.height * car; sx = (img.width - sw) / 2; }
+        else { sh = img.width / car; sy = (img.height - sh) / 2; }
+        c.drawImage(img, sx, sy, sw, sh, cx * S, (cy + labelH) * S, pw, ph);
+        resolve();
+      };
+      img.onerror = resolve;
+      img.src = p.thumbURL;
+    });
+    // caption bar
+    if (cap) {
+      fillR(cx, cy + labelH + ch, cw, capH, '#f7f9fc');
+      hline(cx, cy + labelH + ch, cx + cw, '#e8ecf2');
+      txt(cap, cx + 8, cy + labelH + ch + 4, SANS, 8, '#333333', 'left', cw - 16);
+    }
+    return totalH;
+  }
+
+  const fullW = 754, gap = 6, colW2 = (fullW - gap) / 2;
+
+  if (nP === 1) {
+    const rawIdx = photos.indexOf(allPhotos[0]);
+    const cellH = await drawPhotoCell(allPhotos[0], rawIdx, '📷 現地写真', 20, y, fullW, photoRowH);
+    y += cellH + 8;
+
+  } else if (nP === 2) {
+    let maxH = 0;
+    for (let i = 0; i < 2; i++) {
+      const rawIdx = photos.indexOf(allPhotos[i]);
+      const cx = 20 + i * (colW2 + gap);
+      const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
+      maxH = Math.max(maxH, cellH);
+    }
+    y += maxH + 8;
+
+  } else if (nP === 3) {
+    let maxH = 0;
+    for (let i = 0; i < 2; i++) {
+      const rawIdx = photos.indexOf(allPhotos[i]);
+      const cx = 20 + i * (colW2 + gap);
+      const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
+      maxH = Math.max(maxH, cellH);
+    }
+    y += maxH + gap;
+    const rawIdx2 = photos.indexOf(allPhotos[2]);
+    const cellH3 = await drawPhotoCell(allPhotos[2], rawIdx2, '📷 写真3', 20, y, fullW, photoRowH);
+    y += cellH3 + 8;
+
+  } else {
+    for (let row = 0; row < 2; row++) {
+      let maxH = 0;
+      for (let col = 0; col < 2; col++) {
+        const i = row * 2 + col;
+        const rawIdx = photos.indexOf(allPhotos[i]);
+        const cx = 20 + col * (colW2 + gap);
+        const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
+        maxH = Math.max(maxH, cellH);
+      }
+      y += maxH + (row === 0 ? gap : 8);
+    }
+  }
+
+  // ── MAP (full-width, tall) ──
+  const mapH=240;
+  fillR(20,y,754,mapH+18,'#dde8f5'); strokeR(20,y,754,mapH+18,'#d4d9e1');
+  fillR(20,y,754,18,'#f0f4ff'); hline(20,y+18,774,'#d4d9e1');
+  btxt('🗺 撮影位置（地図）',28,y+4,SANS,7.5,'#4a6fa5');
+  await drawMapTiles(c,lat,lng,20*S,(y+18)*S,754*S,mapH*S);
+  y+=mapH+22;
+
+  // ── COORDS ──
+  fillR(20,y,3,14,'#1a56db');
+  btxt('位置情報 / Location Data',28,y+1,SANS,9,'#0f3a8a');
+  y+=18;
+
+  const cells=[
+    ['緯度 (Lat)',lat.toFixed(8)],['経度 (Lng)',lng.toFixed(8)],['GPS高度',alt!=null?alt.toFixed(2)+' m':'—'],
+    ['UTM Zone',utm.zone+utm.band],['UTM Easting',utm.e.toLocaleString()],['UTM Northing',utm.n.toLocaleString()],
+  ];
+  const cw=754/3, ch=40;
+  for(let row=0;row<2;row++) for(let col=0;col<3;col++){
+    const ci=row*3+col, cx=20+col*cw, cy=y+row*(ch+4);
+    fillR(cx,cy,cw-4,ch,'#f7f9fc'); strokeR(cx,cy,cw-4,ch,'#d4d9e1');
+    btxt(cells[ci][0],cx+8,cy+5, SANS,7.5,'#4a6fa5');
+    btxt(cells[ci][1],cx+8,cy+18,MONO,10, '#1a1a1a','left',cw-18);
+  }
+  y+=2*(ch+4)+4;
+
+  fillR(20,y,754,36,'#f7f9fc'); strokeR(20,y,754,36,'#d4d9e1');
+  btxt('住所 Address',28,y+4,SANS,7.5,'#4a6fa5');
+  txt(address,28,y+16,SANS,9,'#1a1a1a','left',726);
+  y+=40;
+
+  fillR(20,y,754,28,'#fff8e1'); strokeR(20,y,754,28,'#f0d060');
+  btxt('度分秒 (DMS)',28,y+6,SANS,7.5,'#7a5c00');
+  btxt(`${toDMS(lat,true)}　${toDMS(lng,false)}`,130,y+8,MONO,9.5,'#3d2e00','left',630);
+  y+=34;
+
+  // ── EXIF TABLE ──
+  y+=6;
+  fillR(20,y,3,14,'#1a56db');
+  btxt('撮影情報 / Camera EXIF',28,y+1,SANS,9,'#0f3a8a');
+  y+=18;
+  fillR(20,y,754,26,'#f7f9fc'); strokeR(20,y,754,26,'#d4d9e1'); vline(397,y,y+26,'#d4d9e1');
+  btxt('撮影日時',28,y+5,SANS,8,'#4a6fa5'); txt(dtStr,120,y+5,SANS,9,'#1a1a1a','left',268);
+  btxt('方角 (Direction)',405,y+5,SANS,8,'#4a6fa5'); txt(dirVal,545,y+5,SANS,9,'#1a1a1a');
+  y+=30;
+
+  // ── REMARKS ──
+  y+=6;
+  fillR(20,y,3,14,'#1a56db');
+  btxt('備考 / Remarks',28,y+1,SANS,9,'#0f3a8a');
+  y+=18;
+  fillR(20,y,754,80,'#f7f9fc'); strokeR(20,y,754,80,'#d4d9e1');
+  if(note) note.split('\n').slice(0,4).forEach((ln,i)=>txt(ln,28,y+8+i*17,SANS,9.5,'#1a1a1a','left',726));
+  y+=86;
+
+  // ── FOOTER ──
+  const fy=H/S-38;
+  hline(20,fy,774,'#0f3a8a',2);
+  txt('このレポートは現地調査報告ツールにより自動生成されました',20,fy+8, SANS,7.5,'#4a6fa5');
+  txt('生成日時：'+new Date().toLocaleString('ja-JP'),             20,fy+22,MONO,7.5,'#4a6fa5');
+
+  // ── SAVE ──
+  const dateStr=(dateVal||new Date().toISOString().slice(0,10)).replace(/\//g,'-');
+  const fname=`${title.replace(/[\\/:*?"<>|]/g,'_')}_${dateStr}.jpg`;
+  cvs.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=fname; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  },'image/jpeg',0.93);
+}
+
+// OSMタイルをCanvasに描画
+async function drawMapTiles(ctx,lat,lng,x,y,w,h) {
+  const zoom=15, n=Math.pow(2,zoom);
+  const xtf=((lng+180)/360)*n;
+  const ytf=((1-Math.log(Math.tan(lat*Math.PI/180)+1/Math.cos(lat*Math.PI/180))/Math.PI)/2)*n;
+  const xt=Math.floor(xtf), yt=Math.floor(ytf);
+  const xFrac=xtf-xt, yFrac=ytf-yt;
+  const ts=256;
+  const off=document.createElement('canvas');
+  off.width=ts*3; off.height=ts*3;
+  const oc=off.getContext('2d');
+  await Promise.all([-1,0,1].flatMap(dy=>[-1,0,1].map(dx=>new Promise(resolve=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{oc.drawImage(img,(dx+1)*ts,(dy+1)*ts);resolve();};
+    img.onerror=resolve;
+    const sub=['a','b','c'][(Math.abs(dx)+Math.abs(dy))%3];
+    img.src=`https://${sub}.tile.openstreetmap.org/${zoom}/${xt+dx}/${yt+dy}.png`;
+  }))));
+  const cx=ts+xFrac*ts, cy=ts+yFrac*ts;
+  ctx.drawImage(off,cx-w/2,cy-h/2,w,h,x,y,w,h);
+  // Marker
+  const mx=x+w/2, my=y+h/2;
+  ctx.beginPath(); ctx.arc(mx,my,10,0,Math.PI*2); ctx.fillStyle='#d32f2f'; ctx.fill();
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=2.5; ctx.stroke();
+  ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2); ctx.fillStyle='#ffffff'; ctx.fill();
+}
+</script>
+</body>
+</html>
