@@ -338,7 +338,7 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); font
 .pg-grid { display: grid; gap: 6px; margin-bottom: 10px; }
 .pg-cell { border: 1px solid #d4d9e1; border-radius: 4px; overflow: hidden; }
 .pg-label { background: #f0f4ff; border-bottom: 1px solid #d4d9e1; padding: 3px 8px; font-size: 7.5pt; font-weight: 700; color: #4a6fa5; letter-spacing:.05em; }
-.pg-img { width: 100%; object-fit: cover; display: block; }
+.pg-img { width: 100%; height: auto; display: block; max-height: 280px; object-fit: cover; }
 .pg-caption { padding: 4px 8px 5px; font-size: 8pt; color: #333; background: #f7f9fc; border-top: 1px solid #e8ecf2; line-height: 1.4; font-family: var(--sans); }
 
 /* Map full-width */
@@ -1104,7 +1104,7 @@ async function generateReport() {
     cellsHTML += `
       <div class="pg-cell" style="${spanStyle}">
         <div class="pg-label">${label}</div>
-        <img class="pg-img" src="${p.thumbURL}" style="height:${imgH}px;" alt="">
+        <img class="pg-img" src="${p.thumbURL}" alt="">
         ${cap ? `<div class="pg-caption">${cap}</div>` : ''}
       </div>`;
   });
@@ -1262,35 +1262,50 @@ async function downloadImage() {
   // ── PHOTOS (1-4枚グリッド) ──
   const allPhotos = photos.filter(p => p.thumbURL).slice(0, 4);
   const nP = allPhotos.length;
-  const photoRowH = nP <= 2 ? 145 : 105;
   const labelH = 18;
-  const capH = 20; // caption bar height
+  const capH   = 20;
+  const fullW  = 754, gap = 6, colW2 = (fullW - gap) / 2;
 
+  // 写真の自然なアスペクト比から高さを計算（最大高さキャップあり）
+  async function getNaturalH(thumb, cellW, maxH) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const h = Math.round(cellW / (img.width / img.height));
+        resolve(Math.min(h, maxH));
+      };
+      img.onerror = () => resolve(maxH);
+      img.src = thumb;
+    });
+  }
+
+  // 写真を歪みなしで描画（アスペクト比維持・クロップなし）
   async function drawPhotoCell(p, rawIdx, label, cx, cy, cw, ch) {
     const cap = document.getElementById(`cap-${rawIdx}`)?.value.trim() || '';
-    const totalH = ch + labelH + (cap ? capH : 0);
+    const totalH = labelH + ch + (cap ? capH : 0);
     fillR(cx, cy, cw, totalH, '#ffffff');
     strokeR(cx, cy, cw, totalH, '#d4d9e1');
-    // label bar
     fillR(cx, cy, cw, labelH, '#f0f4ff');
     hline(cx, cy + labelH, cx + cw, '#d4d9e1');
     btxt(label, cx + 8, cy + 4, SANS, 7.5, '#4a6fa5');
-    // photo
     await new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
-        const pw = cw * S, ph = ch * S;
-        const ar = img.width / img.height, car = pw / ph;
-        let sx = 0, sy = 0, sw = img.width, sh = img.height;
-        if (ar > car) { sw = img.height * car; sx = (img.width - sw) / 2; }
-        else { sh = img.width / car; sy = (img.height - sh) / 2; }
-        c.drawImage(img, sx, sy, sw, sh, cx * S, (cy + labelH) * S, pw, ph);
+        // 歪みなし：cellW×ch に収まるよう contain 描画（letterbox）
+        const ar = img.width / img.height;
+        const car = cw / ch;
+        let dw, dh, dx, dy;
+        if (ar > car) { dw = cw; dh = cw / ar; dx = 0; dy = (ch - dh) / 2; }
+        else           { dh = ch; dw = ch * ar; dy = 0; dx = (cw - dw) / 2; }
+        // letterbox 背景
+        fillR(cx, cy + labelH, cw, ch, '#1a1a1a');
+        c.drawImage(img, 0, 0, img.width, img.height,
+          (cx + dx) * S, (cy + labelH + dy) * S, dw * S, dh * S);
         resolve();
       };
       img.onerror = resolve;
       img.src = p.thumbURL;
     });
-    // caption bar
     if (cap) {
       fillR(cx, cy + labelH + ch, cw, capH, '#f7f9fc');
       hline(cx, cy + labelH + ch, cx + cw, '#e8ecf2');
@@ -1299,47 +1314,53 @@ async function downloadImage() {
     return totalH;
   }
 
-  const fullW = 754, gap = 6, colW2 = (fullW - gap) / 2;
+  // 各写真の自然な高さを先読み（最大250px / 2列時は200px）
+  const maxPhH = nP <= 1 ? 280 : nP <= 2 ? 240 : 200;
+  const naturalHs = await Promise.all(allPhotos.map(p => {
+    const cw = (nP === 1 || (nP === 3)) ? fullW : colW2;
+    // 3枚目は全幅、それ以外は列幅
+    return getNaturalH(p.thumbURL, cw, maxPhH);
+  }));
 
   if (nP === 1) {
-    const rawIdx = photos.indexOf(allPhotos[0]);
-    const cellH = await drawPhotoCell(allPhotos[0], rawIdx, '📷 現地写真', 20, y, fullW, photoRowH);
+    const h = naturalHs[0];
+    const cellH = await drawPhotoCell(allPhotos[0], photos.indexOf(allPhotos[0]), '📷 現地写真', 20, y, fullW, h);
     y += cellH + 8;
 
   } else if (nP === 2) {
-    let maxH = 0;
+    const rowH = Math.max(naturalHs[0], naturalHs[1]); // 行内で高さ統一
+    let maxCellH = 0;
     for (let i = 0; i < 2; i++) {
-      const rawIdx = photos.indexOf(allPhotos[i]);
       const cx = 20 + i * (colW2 + gap);
-      const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
-      maxH = Math.max(maxH, cellH);
+      const cellH = await drawPhotoCell(allPhotos[i], photos.indexOf(allPhotos[i]), `📷 写真${i+1}`, cx, y, colW2, rowH);
+      maxCellH = Math.max(maxCellH, cellH);
     }
-    y += maxH + 8;
+    y += maxCellH + 8;
 
   } else if (nP === 3) {
-    let maxH = 0;
+    const rowH = Math.max(naturalHs[0], naturalHs[1]);
+    let maxCellH = 0;
     for (let i = 0; i < 2; i++) {
-      const rawIdx = photos.indexOf(allPhotos[i]);
       const cx = 20 + i * (colW2 + gap);
-      const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
-      maxH = Math.max(maxH, cellH);
+      const cellH = await drawPhotoCell(allPhotos[i], photos.indexOf(allPhotos[i]), `📷 写真${i+1}`, cx, y, colW2, rowH);
+      maxCellH = Math.max(maxCellH, cellH);
     }
-    y += maxH + gap;
-    const rawIdx2 = photos.indexOf(allPhotos[2]);
-    const cellH3 = await drawPhotoCell(allPhotos[2], rawIdx2, '📷 写真3', 20, y, fullW, photoRowH);
+    y += maxCellH + gap;
+    const h3 = naturalHs[2];
+    const cellH3 = await drawPhotoCell(allPhotos[2], photos.indexOf(allPhotos[2]), '📷 写真3', 20, y, fullW, h3);
     y += cellH3 + 8;
 
   } else {
     for (let row = 0; row < 2; row++) {
-      let maxH = 0;
+      const rowH = Math.max(naturalHs[row*2], naturalHs[row*2+1]);
+      let maxCellH = 0;
       for (let col = 0; col < 2; col++) {
         const i = row * 2 + col;
-        const rawIdx = photos.indexOf(allPhotos[i]);
         const cx = 20 + col * (colW2 + gap);
-        const cellH = await drawPhotoCell(allPhotos[i], rawIdx, `📷 写真${i+1}`, cx, y, colW2, photoRowH);
-        maxH = Math.max(maxH, cellH);
+        const cellH = await drawPhotoCell(allPhotos[i], photos.indexOf(allPhotos[i]), `📷 写真${i+1}`, cx, y, colW2, rowH);
+        maxCellH = Math.max(maxCellH, cellH);
       }
-      y += maxH + (row === 0 ? gap : 8);
+      y += maxCellH + (row === 0 ? gap : 8);
     }
   }
 
