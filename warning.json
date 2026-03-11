@@ -1,18 +1,13 @@
 {
-  "fetched_jst": "2026-03-11 23:36:16",
+  "fetched_jst": "2026-03-12 02:36:25",
   "warnings": [
     {
       "area_name": "",
       "warnings": [
         {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
+          "code": "14",
+          "status": "発表"
+        },
         {
           "code": "21",
           "status": "継続"
@@ -23,14 +18,9 @@
       "area_name": "",
       "warnings": [
         {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
+          "code": "14",
+          "status": "発表"
+        },
         {
           "code": "21",
           "status": "継続"
@@ -41,293 +31,9 @@
       "area_name": "",
       "warnings": [
         {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
+          "code": "14",
+          "status": "発表"
+        },
         {
           "code": "21",
           "status": "継続"
