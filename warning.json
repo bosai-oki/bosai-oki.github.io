@@ -1,37 +1,19 @@
 {
-  "fetched_jst": "2026-03-12 07:00:10",
+  "fetched_jst": "2026-03-12 07:55:12",
   "warnings": [
     {
       "area_name": "",
       "warnings": [
         {
           "code": "14",
+          "status": "継続"
+        },
+        {
+          "code": "15",
           "status": "発表"
         },
         {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "14",
-          "status": "発表"
-        },
-        {
-          "code": "21",
-          "status": "継続"
-        }
-      ]
-    },
-    {
-      "area_name": "",
-      "warnings": [
-        {
-          "code": "14",
+          "code": "16",
           "status": "発表"
         },
         {
