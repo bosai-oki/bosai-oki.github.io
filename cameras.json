@@ -1,58 +1,58 @@
 {
-  "last_fetch_jst": "2026-03-11 16:34:53",
+  "last_fetch_jst": "2026-03-11 19:04:21",
   "camera_count": 42,
   "cameras": [
     {
       "pid": "01",
-      "size": 60908
+      "size": 48641
     },
     {
       "pid": "02",
-      "size": 83845
+      "size": 68159
     },
     {
       "pid": "03",
-      "size": 87667
+      "size": 69147
     },
     {
       "pid": "04",
-      "size": 113127
+      "size": 83392
     },
     {
       "pid": "05",
-      "size": 93123
+      "size": 75804
     },
     {
       "pid": "06",
-      "size": 100191
+      "size": 91308
     },
     {
       "pid": "07",
-      "size": 106896
+      "size": 82415
     },
     {
       "pid": "08",
-      "size": 97498
+      "size": 78959
     },
     {
       "pid": "09",
-      "size": 97911
+      "size": 89787
     },
     {
       "pid": "10",
-      "size": 63045
+      "size": 52349
     },
     {
       "pid": "11",
-      "size": 90313
+      "size": 70331
     },
     {
       "pid": "12",
-      "size": 85777
+      "size": 64411
     },
     {
       "pid": "13",
-      "size": 78980
+      "size": 59751
     },
     {
       "pid": "14",
@@ -60,7 +60,7 @@
     },
     {
       "pid": "15",
-      "size": 91153
+      "size": 71915
     },
     {
       "pid": "16",
@@ -68,19 +68,19 @@
     },
     {
       "pid": "17",
-      "size": 86422
+      "size": 80413
     },
     {
       "pid": "18",
-      "size": 98395
+      "size": 89909
     },
     {
       "pid": "19",
-      "size": 84807
+      "size": 84717
     },
     {
       "pid": "20",
-      "size": 56283
+      "size": 50928
     },
     {
       "pid": "21",
@@ -88,19 +88,19 @@
     },
     {
       "pid": "22",
-      "size": 110136
+      "size": 97838
     },
     {
       "pid": "23",
-      "size": 102250
+      "size": 84459
     },
     {
       "pid": "24",
-      "size": 113795
+      "size": 98726
     },
     {
       "pid": "25",
-      "size": 98705
+      "size": 69589
     },
     {
       "pid": "26",
@@ -120,11 +120,11 @@
     },
     {
       "pid": "41",
-      "size": 96479
+      "size": 76242
     },
     {
       "pid": "42",
-      "size": 85018
+      "size": 68831
     },
     {
       "pid": "43",
@@ -152,11 +152,11 @@
     },
     {
       "pid": "52",
-      "size": 101865
+      "size": 72451
     },
     {
       "pid": "53",
-      "size": 115858
+      "size": 73558
     },
     {
       "pid": "64",
@@ -176,19 +176,19 @@
       "key": "okinawa-city-hija",
       "name": "比謝川",
       "loc": "沖縄市（水位監視）",
-      "size": 42555
+      "size": 31154
     },
     {
       "key": "okinawa-city-awase1",
       "name": "泡瀬川①",
       "loc": "沖縄市（水位監視）",
-      "size": 24689
+      "size": 24202
     },
     {
       "key": "okinawa-city-awase2",
       "name": "泡瀬川②",
       "loc": "沖縄市（水位監視）",
-      "size": 24527
+      "size": 24574
     }
   ],
   "road_cameras": [
@@ -278,43 +278,43 @@
       "key": "ogimi-nousonic",
       "name": "農村環境改善センター",
       "loc": "大宜味村",
-      "size": 28285
+      "size": 28255
     },
     {
       "key": "ogimi-takazatocc",
       "name": "田嘉里公民館",
       "loc": "大宜味村",
-      "size": 30568
+      "size": 28097
     },
     {
       "key": "ogimi-ogimiej",
       "name": "大宜味小中学校",
       "loc": "大宜味村",
-      "size": 31107
+      "size": 26540
     },
     {
       "key": "ogimi-tuhacc",
       "name": "津波公民館",
       "loc": "大宜味村",
-      "size": 30538
+      "size": 30374
     },
     {
       "key": "ogimi-taihocc",
       "name": "大保公民館",
       "loc": "大宜味村",
-      "size": 30224
+      "size": 29958
     },
     {
       "key": "ogimi-shioya",
       "name": "旧塩屋小学校",
       "loc": "大宜味村",
-      "size": 31221
+      "size": 27574
     },
     {
       "key": "ogimi-ogimiejgrd",
       "name": "旧大宜味小学校グラウンド",
       "loc": "大宜味村",
-      "size": 26963
+      "size": 28320
     }
   ],
   "youtube_live": [
@@ -358,7 +358,7 @@
       "name": "豊見城市宜保",
       "loc": "豊見城市宜保",
       "channel_id": "UCIcAUp1HERvivHYI51IXI4Q",
-      "video_id": "Kg7TaJavBFE"
+      "video_id": "eXGwfzkR3WI"
     },
     {
       "name": "比地川（国頭村）",
