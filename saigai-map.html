@@ -12,18 +12,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0e14;
-  --panel: #111820;
-  --border: #1e3048;
-  --accent: #00d4ff;
-  --danger: #ff3b3b;
-  --text: #c8d8e8;
-  --dim: #4a6070;
-  --cat-flood: #3b9eff;
-  --cat-landslide: #c47c2a;
-  --cat-road: #f5a623;
-  --cat-building: #ff4455;
-  --cat-human: #cc44ff;
+  --bg: #f0f2f5;
+  --panel: #ffffff;
+  --border: #d0d7e2;
+  --accent: #0070cc;
+  --danger: #d93025;
+  --text: #1a2433;
+  --dim: #6b7a8d;
+  --cat-flood: #1a7fd4;
+  --cat-landslide: #a05c10;
+  --cat-road: #c47d00;
+  --cat-building: #d42020;
+  --cat-human: #8b20cc;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
@@ -51,9 +51,9 @@ position: relative;
 content: ‘’;
 position: absolute;
 bottom: 0; left: 0; right: 0;
-height: 1px;
+height: 2px;
 background: linear-gradient(90deg, var(–accent) 0%, transparent 60%);
-opacity: 0.4;
+opacity: 0.3;
 }
 .title-block { display: flex; align-items: center; gap: 10px; }
 .title-icon {
@@ -259,8 +259,8 @@ overflow: hidden;
 #map { width: 100%; height: 100%; }
 
 /* Leaflet overrides */
-.leaflet-container { background: #0d1520; }
-.leaflet-tile { filter: brightness(0.7) saturate(0.6) hue-rotate(180deg); }
+.leaflet-container { background: #e8ecf0; }
+.leaflet-tile { filter: none; }
 .leaflet-control-zoom a {
 background: var(–panel) !important;
 color: var(–text) !important;
@@ -271,9 +271,9 @@ border-color: var(–border) !important;
 .leaflet-popup-content-wrapper {
 background: var(–panel) !important;
 border: 1px solid var(–border) !important;
-border-radius: 4px !important;
+border-radius: 6px !important;
 color: var(–text) !important;
-box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
 }
 .leaflet-popup-tip { background: var(–panel) !important; }
 .leaflet-popup-close-button { color: var(–dim) !important; }
@@ -303,7 +303,7 @@ line-height: 1.6;
 margin-top: 6px;
 font-size: 11px;
 color: var(–text);
-background: rgba(0,0,0,0.3);
+background: #f4f6f9;
 padding: 4px 6px;
 border-radius: 2px;
 border-left: 2px solid var(–border);
@@ -313,7 +313,7 @@ border-left: 2px solid var(–border);
 #mapinfo {
 position: absolute;
 top: 10px; right: 10px;
-background: rgba(10,14,20,0.85);
+background: rgba(255,255,255,0.92);
 border: 1px solid var(–border);
 padding: 8px 12px;
 font-family: ‘Share Tech Mono’, monospace;
@@ -323,6 +323,7 @@ pointer-events: none;
 z-index: 1000;
 letter-spacing: 1px;
 line-height: 1.8;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 #datetime { color: var(–accent); font-size: 10px; }
 
@@ -384,7 +385,7 @@ font-family: ‘Noto Sans JP’, sans-serif;
 .modal-cat-btn.selected { color: white; }
 textarea#memo {
 width: 100%;
-background: rgba(0,0,0,0.3);
+background: #f8f9fb;
 border: 1px solid var(–border);
 color: var(–text);
 padding: 8px;
@@ -421,7 +422,7 @@ position: absolute;
 bottom: 20px;
 left: 50%;
 transform: translateX(-50%);
-background: rgba(10,14,20,0.8);
+background: rgba(255,255,255,0.92);
 border: 1px solid var(–border);
 padding: 10px 18px;
 font-size: 11px;
@@ -431,23 +432,10 @@ letter-spacing: 1px;
 pointer-events: none;
 z-index: 1000;
 white-space: nowrap;
+box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-/* scan line effect */
-#mapwrap::after {
-content: ‘’;
-position: absolute;
-inset: 0;
-background: repeating-linear-gradient(
-0deg,
-transparent,
-transparent 3px,
-rgba(0,0,0,0.03) 3px,
-rgba(0,0,0,0.03) 4px
-);
-pointer-events: none;
-z-index: 500;
-}
+/* scan line effect - light mode では無効 */
 
 /* manual pin mode */
 #pinModeOverlay {
@@ -464,8 +452,8 @@ position: absolute;
 top: 50%;
 left: 50%;
 transform: translate(-50%, -50%);
-background: rgba(10,14,20,0.92);
-border: 1px solid var(–accent);
+background: rgba(255,255,255,0.95);
+border: 2px solid var(–accent);
 color: var(–accent);
 font-family: ‘Share Tech Mono’, monospace;
 font-size: 13px;
@@ -474,6 +462,7 @@ padding: 14px 24px;
 text-align: center;
 pointer-events: none;
 white-space: nowrap;
+box-shadow: 0 4px 16px rgba(0,0,0,0.15);
 }
 #pinModeMsg span { display:block; font-size:10px; color:var(–dim); margin-top:4px; }
 #pinModeCancelBtn {
