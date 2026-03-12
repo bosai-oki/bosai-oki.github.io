@@ -2,7 +2,7 @@ name: 河川カメラ画像取得
 
 on:
   schedule:
-    - cron: '5,15,25,35,45,55 * * * *'
+    - cron: '0,5,10,15,20,25,30,35,40,45,50,55 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -64,7 +64,8 @@ jobs:
             "higashi-school:東小中学校"; do
             KEY="${CAM%%:*}"
             LABEL="${CAM##*:}"
-            curl -sf --max-time 15 --retry 2 \
+            curl -sf --max-time 20 --retry 3 --retry-delay 2 \
+              --insecure \
               -H "Referer: ${HIGASHI_BASE}/${KEY}.html" \
               -H "User-Agent: Mozilla/5.0" \
               -o "img_cam/higashi-${KEY}.jpg" \
@@ -84,13 +85,171 @@ jobs:
             "ogimiejgrd:旧大宜味小学校グラウンド"; do
             KEY="${CAM%%:*}"
             LABEL="${CAM##*:}"
-            curl -sf --max-time 15 --retry 2 \
+            curl -sf --max-time 20 --retry 3 --retry-delay 2 \
+              --insecure \
               -H "Referer: ${OGIMI_BASE}/${KEY}.html" \
               -H "User-Agent: Mozilla/5.0" \
               -o "img_cam/ogimi-${KEY}.jpg" \
               "${OGIMI_BASE}/photo/${KEY}.jpg" \
               && echo "OK: 大宜味村 ${LABEL}" || echo "NG: 大宜味村 ${LABEL}"
           done
+
+      - name: dashboard.json 生成（AMeDAS・河川水位・ダム・キキクル）
+        shell: python3 {0}
+        run: |
+          import json, urllib.request, urllib.parse, re
+          from datetime import datetime, timezone, timedelta
+          from xml.etree import ElementTree as ET
+
+          JST = timezone(timedelta(hours=9))
+          now = datetime.now(JST)
+          result = {
+              'fetched_jst': now.strftime('%Y-%m-%d %H:%M:%S'),
+              'amedas': [],
+              'rivers': [],
+              'dams': [],
+              'kikukuru': [],
+          }
+
+          def fetch(url, timeout=15, headers=None):
+              req = urllib.request.Request(url, headers=headers or {'User-Agent': 'Mozilla/5.0'})
+              with urllib.request.urlopen(req, timeout=timeout) as r:
+                  return r.read()
+
+          # ── AMeDAS ──────────────────────────────────────────
+          AMEDAS_STATIONS = {
+              '91197': {'name': '那覇',   'loc': '那覇市'},
+              '91068': {'name': '名護',   'loc': '名護市'},
+              '93012': {'name': '久米島', 'loc': '久米島町'},
+              '94081': {'name': '宮古島', 'loc': '宮古島市'},
+              '95002': {'name': '石垣島', 'loc': '石垣市'},
+          }
+          WIND_DIR = ['','北','北北東','北東','東北東','東','東南東','南東','南南東',
+                      '南','南南西','南西','西南西','西','西北西','北西','北北西']
+          try:
+              latest_time = fetch('https://www.jma.go.jp/bosai/amedas/data/latest_time.txt').decode().strip()
+              # "20240101030000" → "20240101_030000"
+              ts = latest_time[:8] + '_' + latest_time[8:]
+              for code, info in AMEDAS_STATIONS.items():
+                  try:
+                      raw = json.loads(fetch(
+                          f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{ts}.json'
+                      ))
+                      def v(key):
+                          d = raw.get(key)
+                          return d[0] if isinstance(d, list) and d[1] == 0 else None
+                      wd = v('windDirection')
+                      result['amedas'].append({
+                          **info,
+                          'rainfall1h':  v('precipitation1h')  or 0,
+                          'rainfall24h': v('precipitation24h') or 0,
+                          'temp':        v('temp'),
+                          'wind':        f"{WIND_DIR[int(wd)] if wd else '–'} {v('wind') or 0}m/s",
+                      })
+                      print(f"AMeDAS {info['name']}: OK")
+                  except Exception as e:
+                      print(f"AMeDAS {info['name']}: NG ({e})")
+          except Exception as e:
+              print(f"AMeDAS latest_time NG: {e}")
+
+          # ── 河川水位（国交省 川の防災情報 XML）────────────────
+          # 沖縄県主要観測所コード（水系コード-観測所コード）
+          RIVER_STATIONS = [
+              {'code': '4700440010060', 'name': '安里川　松川橋',   'loc': '那覇市',   'limit': {'watch':0.80,'warning':1.20,'danger':1.60,'critical':2.00}},
+              {'code': '4700430010050', 'name': '牧港川　牧港橋',   'loc': '浦添市',   'limit': {'watch':0.60,'warning':1.00,'danger':1.40,'critical':1.80}},
+              {'code': '4700420010040', 'name': '比謝川　嘉手納橋', 'loc': '中頭郡嘉手納町', 'limit': {'watch':1.20,'warning':1.80,'danger':2.40,'critical':3.00}},
+              {'code': '4700380010020', 'name': '羽地大川　羽地橋', 'loc': '名護市',   'limit': {'watch':0.80,'warning':1.20,'danger':1.80,'critical':2.40}},
+              {'code': '4700280010010', 'name': '慶佐次川　慶佐次', 'loc': '東村',     'limit': {'watch':1.00,'warning':1.60,'danger':2.20,'critical':2.80}},
+          ]
+          try:
+              xml_url = 'https://www.river.go.jp/kawabou/out/s_rslt.do?&sn=1&rn=0&tn=1&ext=0&fld=0&bsn=&ken=47&ctg=1&grp=0&mks=&ncs=&dts=&dmb=&scl=0&flt=0&fmt=xml'
+              raw_xml = fetch(xml_url)
+              root = ET.fromstring(raw_xml)
+              # 観測所コード→水位のマップを作成
+              level_map = {}
+              for obs in root.iter('observationStation'):
+                  code = obs.findtext('stationCode','').strip()
+                  lv   = obs.findtext('waterLevel','').strip()
+                  if code and lv:
+                      try: level_map[code] = float(lv)
+                      except: pass
+              for st in RIVER_STATIONS:
+                  lv = level_map.get(st['code'])
+                  if lv is not None:
+                      result['rivers'].append({
+                          'name':  st['name'],
+                          'loc':   st['loc'],
+                          'level': lv,
+                          'limit': st['limit'],
+                          'trend': 'unknown',
+                          'change': '–',
+                      })
+                      print(f"河川 {st['name']}: {lv}m")
+                  else:
+                      print(f"河川 {st['name']}: データなし")
+          except Exception as e:
+              print(f"河川水位 NG: {e}")
+
+          # ── ダム（国交省 ダム情報 XML）──────────────────────
+          try:
+              dam_url = 'http://www1.river.go.jp/cgi-bin/DspDamData.exe?KIND=1&PREF=47&FMT=XML'
+              raw_xml = fetch(dam_url)
+              root = ET.fromstring(raw_xml)
+              for dam in root.iter('dam'):
+                  name   = dam.findtext('damName','').strip()
+                  rate   = dam.findtext('storageRate','').strip()
+                  inflow = dam.findtext('inflowRate','').strip()
+                  outflow= dam.findtext('outflowRate','').strip()
+                  if not name: continue
+                  try:
+                      result['dams'].append({
+                          'name':        name,
+                          'storageRate': float(rate)  if rate  else None,
+                          'inflow':      float(inflow) if inflow else None,
+                          'outflow':     float(outflow) if outflow else None,
+                      })
+                      print(f"ダム {name}: {rate}%")
+                  except Exception as e2:
+                      print(f"ダム {name} パースエラー: {e2}")
+          except Exception as e:
+              print(f"ダム NG: {e}")
+
+          # ── キキクル（気象庁 危険度分布）──────────────────────
+          try:
+              risk_raw = json.loads(fetch('https://www.jma.go.jp/bosai/risk/data/risk/471000.json'))
+              # floodレベルとsedimentレベルの最大値でエリア別危険度を算出
+              KIKI_AREAS = {
+                  '47201': '那覇市',   '47203': '宜野湾市', '47205': '石垣市',
+                  '47206': '浦添市',   '47207': '名護市',   '47208': '糸満市',
+                  '47209': '沖縄市',   '47301': '国頭村',   '47302': '大宜味村',
+                  '47306': '東村',     '47324': '中城村',   '47325': '北中城村',
+              }
+              kiki_map = {}
+              for at in (risk_raw.get('areaTypes') or []):
+                  for area in (at.get('areas') or []):
+                      code = str(area.get('code',''))
+                      if code in KIKI_AREAS:
+                          flood    = area.get('flood', 0) or 0
+                          sediment = area.get('sediment', 0) or 0
+                          level    = max(flood, sediment)
+                          if code not in kiki_map or level > kiki_map[code]['level']:
+                              kiki_map[code] = {'level': level}
+              KIKI_LABELS = {0:'平常',1:'注意',2:'警戒',3:'危険',4:'非常に危険',5:'最大級'}
+              for code, name in KIKI_AREAS.items():
+                  if code in kiki_map:
+                      lv = kiki_map[code]['level']
+                      result['kikukuru'].append({
+                          'area':  name,
+                          'level': lv,
+                          'label': KIKI_LABELS.get(lv, str(lv)),
+                      })
+              print(f"キキクル: {len(result['kikukuru'])}地域")
+          except Exception as e:
+              print(f"キキクル NG: {e}")
+
+          with open('dashboard.json', 'w', encoding='utf-8') as f:
+              json.dump(result, f, ensure_ascii=False, indent=2)
+          print(f"dashboard.json 生成完了 / AMeDAS:{len(result['amedas'])} 河川:{len(result['rivers'])} ダム:{len(result['dams'])} キキクル:{len(result['kikukuru'])}")
 
       - name: YouTube ライブID取得 + cameras.json + warning.json 生成
         env:
@@ -300,5 +459,5 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add img_cam/ cameras.json warning.json
+          git add img_cam/ cameras.json warning.json dashboard.json
           git diff --staged --quiet || git commit -m "🌊 カメラ更新 $(TZ='Asia/Tokyo' date '+%Y-%m-%d %H:%M') JST" && git push
