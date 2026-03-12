@@ -159,7 +159,7 @@ jobs:
                   for w in (area.get('warnings') or []):
                       wcode  = str(w.get('code',''))
                       status = w.get('status','')
-                      if status not in ('発表','継続'):
+                      if status != '発表':  # '継続'は平常時も存在するので除外
                           continue
                       for cat, lv in CODE_MAP.get(wcode, []):
                           if cat == 'shinsu': shinsu = max(shinsu, lv)
@@ -238,7 +238,8 @@ jobs:
               print(f"キキクル取得失敗: 警報データ{len(result['kikukuru'])}市町村で代替")
 
 
-          # ── キキクル 危険度分布 URL調査（gzip対応・最新時刻・複数パターン）──
+
+          # ── キキクル 危険度分布 URL調査（member付き）──────────────
           import gzip as gz
           def fetch_gz(url):
               import urllib.request as ur
@@ -254,31 +255,28 @@ jobs:
               return raw
 
           try:
-              tt_url = 'https://www.jma.go.jp/bosai/jmatile/data/risk/targetTimes.json'
-              tt_raw = json.loads(fetch_gz(tt_url))
-              latest = tt_raw[0]  # [0]が最新
-              bt = latest.get('basetime','')
-              vt = latest.get('validtime','')
-              elements = latest.get('elements', [])
-              print(f"最新: basetime={bt}, validtime={vt}")
-              print(f"elements: {elements}")
-              # 市区町村レベルの集計データURLを試す
+              tt_raw = json.loads(fetch_gz('https://www.jma.go.jp/bosai/jmatile/data/risk/targetTimes.json'))
+              latest = tt_raw[0]
+              bt = latest['basetime']
+              vt = latest['validtime']
+              mb = latest.get('member', 'none')
+              print(f"最新: bt={bt} vt={vt} member={mb}")
               for url_tmpl in [
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/municipality/471000/contents.json',
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/municipality/47/contents.json',
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/inund/municipality/471000.json',
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/inund/47/contents.json',
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/none/none/surf/municipality/471000/contents.json',
-                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/none/{vt}/surf/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/{mb}/surf/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/{mb}/surf/municipality/47/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/{mb}/surf/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{mb}/surf/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/{mb}/land/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/{mb}/inund/municipality/471000/contents.json',
               ]:
                   try:
                       r = fetch_gz(url_tmpl)
-                      path_short = url_tmpl.split('risk/')[1][:80]
-                      print(f"キキクルURL成功: {path_short}")
-                      print(f"  先頭400bytes: {r[:400]!r}")
+                      path_short = url_tmpl.split('risk/')[1][:90]
+                      print(f"成功: {path_short}")
+                      print(f"  先頭500bytes: {r[:500]!r}")
                       break
                   except Exception as eu:
-                      path_short = url_tmpl.split('risk/')[1][:80]
+                      path_short = url_tmpl.split('risk/')[1][:90]
                       print(f"  失敗: {path_short} → {eu}")
           except Exception as e:
               print(f"キキクルURL調査NG: {type(e).__name__}: {e}")
