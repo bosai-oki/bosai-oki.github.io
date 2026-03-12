@@ -8,6 +8,10 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -502,7 +506,34 @@ transition: transform 0.3s;
 z-index: 99999;
 }
 
-@media (max-width: 700px) {
+/* print option buttons */
+.print-opt-btn {
+display: flex;
+align-items: center;
+gap: 14px;
+padding: 12px 16px;
+background: #f8f9fb;
+border: 1.5px solid #d0d7e2;
+border-radius: 8px;
+cursor: pointer;
+text-align: left;
+transition: all 0.15s;
+width: 100%;
+}
+.print-opt-btn:hover { background: #eef3fb; transform: translateX(2px); }
+.print-opt-icon { font-size: 26px; flex-shrink: 0; }
+.print-opt-title { font-size: 14px; font-weight: 700; color: #1a2433; margin-bottom: 2px; }
+.print-opt-sub { font-size: 11px; color: #6b7a8d; }
+
+/* 印刷用スタイル */
+@media print {
+#topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+body { height: auto !important; overflow: visible !important; background: white !important; }
+#main { display: block !important; height: auto !important; overflow: visible !important; }
+#mapwrap { width: 100% !important; height: 100vh !important; position: relative !important; }
+#map { width: 100% !important; height: 100% !important; }
+}
+
 /* bodyをスクロール可能に */
 body { height: auto; overflow: auto; }
 
@@ -586,7 +617,8 @@ overflow-y: auto;
   </div>
 
   <div class="top-btns">
-    <button class="btn primary" onclick="exportShareHTML()">📤 共有用HTMLを書き出す</button>
+    <button class="btn primary" onclick="exportShareHTML()">📤 共有用HTML</button>
+    <button class="btn" onclick="openPrintModal()">🖨️ 印刷・保存</button>
     <button class="btn" onclick="exportJSON()">EXPORT JSON</button>
     <button class="btn" onclick="importJSON()">IMPORT JSON</button>
     <button class="btn danger-btn" onclick="clearAll()">CLEAR ALL</button>
@@ -657,21 +689,38 @@ overflow-y: auto;
 
   <div id="mapwrap">
     <div id="map"></div>
-    <!-- manual pin overlay -->
-    <div id="pinModeOverlay" onclick="onOverlayClick(event)">
-      <div id="pinModeMsg">
-        📍 被害地点をクリックしてください
-        <span>クリックした場所にピンが立てられます</span>
-      </div>
-      <button class="btn danger-btn pinModeCancelBtn" id="pinModeCancelBtn" onclick="event.stopPropagation();cancelManualPin()" style="position:absolute;top:12px;right:12px">✕ キャンセル</button>
-    </div>
-    <div id="mapinfo">
-      <div id="datetime"></div>
-      沖縄県 被害状況マップ<br>
-      ● GPS付写真をアップロードして<br>
-      　 被害地点をプロット
-    </div>
-    <div id="emptyState">📷 写真をサイドバーにドロップしてください</div>
+
+```
+<!-- 印刷時のみ表示するヘッダー -->
+<div id="print-header" style="display:none;position:absolute;top:0;left:0;right:0;z-index:1000;background:rgba(255,255,255,0.95);border-bottom:2px solid #0070cc;padding:6px 14px;display:none;flex-wrap:wrap;align-items:center;gap:12px">
+  <span style="font-size:18px">⚠️</span>
+  <span style="font-weight:700;font-size:13px;color:#0070cc">沖縄県 被害状況マップ</span>
+  <span id="print-datetime" style="font-size:11px;color:#6b7a8d"></span>
+  <span id="print-counts" style="font-size:11px;color:#1a2433;margin-left:auto"></span>
+</div>
+
+<!-- A2貼り合わせガイド（A2印刷時のみ） -->
+<div id="a2-guide" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;pointer-events:none">
+  <div style="border-left:2px dashed rgba(255,0,0,0.5);height:100vh;position:absolute;left:50%;top:-50vh"></div>
+</div>
+
+<!-- manual pin overlay -->
+<div id="pinModeOverlay" onclick="onOverlayClick(event)">
+  <div id="pinModeMsg">
+    📍 被害地点をクリックしてください
+    <span>クリックした場所にピンが立てられます</span>
+  </div>
+  <button class="btn danger-btn pinModeCancelBtn" id="pinModeCancelBtn" onclick="event.stopPropagation();cancelManualPin()" style="position:absolute;top:12px;right:12px">✕ キャンセル</button>
+</div>
+<div id="mapinfo">
+  <div id="datetime"></div>
+  沖縄県 被害状況マップ<br>
+  ● GPS付写真をアップロードして<br>
+  　 被害地点をプロット
+</div>
+<div id="emptyState">📷 写真をサイドバーにドロップしてください</div>
+```
+
   </div>
 </div>
 
@@ -700,6 +749,106 @@ overflow-y: auto;
       <button class="btn" id="skip-btn" style="display:none" onclick="skipQueue()">スキップ →</button>
       <button style="padding:8px 20px;background:#0070cc;color:#ffffff;border:none;border-radius:4px;cursor:pointer;font-size:13px;font-family:'Noto Sans JP',sans-serif;font-weight:700;" onclick="confirmAdd()">地図に追加</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL: 印刷・保存 -->
+
+<div id="printModal" style="display:none;position:fixed;inset:0;background:rgba(30,50,80,0.45);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(3px);overflow-y:auto;padding:16px 0;">
+  <div style="background:#fff;border-radius:10px;padding:24px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h2 style="font-size:15px;font-weight:700;color:#1a2433">🖨️ 印刷・ファイル出力</h2>
+      <button onclick="closePrintModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7a8d;line-height:1">✕</button>
+    </div>
+
+```
+<!-- ─ ファイル出力 ─ -->
+<div style="font-size:10px;font-weight:700;color:#6b7a8d;letter-spacing:1px;margin-bottom:8px">▸ ファイル出力</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+
+  <button onclick="savePdf()" class="print-opt-btn" style="border-color:#e53935">
+    <span class="print-opt-icon">📕</span>
+    <div>
+      <div class="print-opt-title">PDF出力</div>
+      <div class="print-opt-sub">地図をA4横PDFファイルとして保存</div>
+    </div>
+  </button>
+
+  <button onclick="savePptx()" class="print-opt-btn" style="border-color:#d04a02">
+    <span class="print-opt-icon">📊</span>
+    <div>
+      <div class="print-opt-title">PowerPoint出力（.pptx）</div>
+      <div class="print-opt-sub">地図スライド＋インシデント一覧スライドを生成</div>
+    </div>
+  </button>
+
+  <button onclick="saveExcel()" class="print-opt-btn" style="border-color:#1d6f42">
+    <span class="print-opt-icon">📗</span>
+    <div>
+      <div class="print-opt-title">Excel出力（.xlsx）</div>
+      <div class="print-opt-sub">インシデント一覧を表形式で出力</div>
+    </div>
+  </button>
+
+  <button onclick="saveJpeg()" class="print-opt-btn" style="border-color:#0070cc">
+    <span class="print-opt-icon">🖼️</span>
+    <div>
+      <div class="print-opt-title">画像保存（JPEG）</div>
+      <div class="print-opt-sub">地図全体をJPEGファイルとして保存</div>
+    </div>
+  </button>
+
+</div>
+
+<!-- ─ 印刷 ─ -->
+<div style="font-size:10px;font-weight:700;color:#6b7a8d;letter-spacing:1px;margin-bottom:8px">▸ 印刷</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+
+  <button onclick="printAs('A4')" class="print-opt-btn" style="border-color:#28a745">
+    <span class="print-opt-icon">📄</span>
+    <div>
+      <div class="print-opt-title">A4横</div>
+      <div class="print-opt-sub">297 × 210mm・1枚</div>
+    </div>
+  </button>
+
+  <button onclick="printAs('A3')" class="print-opt-btn" style="border-color:#fd7e14">
+    <span class="print-opt-icon">📋</span>
+    <div>
+      <div class="print-opt-title">A3横</div>
+      <div class="print-opt-sub">420 × 297mm・1枚</div>
+    </div>
+  </button>
+
+  <button onclick="printAs('A2')" class="print-opt-btn" style="border-color:#dc3545">
+    <span class="print-opt-icon">🗺️</span>
+    <div>
+      <div class="print-opt-title">A2サイズ（A3横 × 2枚）</div>
+      <div class="print-opt-sub">左右2分割 → 貼り合わせてA2</div>
+    </div>
+  </button>
+
+  <button onclick="printAs('A1')" class="print-opt-btn" style="border-color:#6f42c1">
+    <span class="print-opt-icon">🗾</span>
+    <div>
+      <div class="print-opt-title">A1サイズ（A3横 × 4枚）</div>
+      <div class="print-opt-sub">2×2分割 → 貼り合わせてA1</div>
+    </div>
+  </button>
+
+  <button onclick="printAs('A0')" class="print-opt-btn" style="border-color:#e83e8c">
+    <span class="print-opt-icon">🌏</span>
+    <div>
+      <div class="print-opt-title">A0サイズ（A3横 × 8枚）</div>
+      <div class="print-opt-sub">4×2分割 → 貼り合わせてA0</div>
+    </div>
+  </button>
+
+</div>
+
+<div id="printMsg" style="display:none;margin-top:14px;padding:10px;background:#fff3cd;border:1px solid #ffc107;border-radius:6px;font-size:12px;color:#856404"></div>
+```
+
   </div>
 </div>
 
@@ -744,6 +893,25 @@ function pad(n) { return String(n).padStart(2,'0'); }
 // モバイルでサイドバー描画後に地図サイズを再計算
 window.addEventListener('resize', () => map.invalidateSize());
 setTimeout(() => map.invalidateSize(), 400);
+
+// 印刷前後のヘッダー表示制御
+window.addEventListener('beforeprint', () => {
+  const hdr = document.getElementById('print-header');
+  hdr.style.display = 'flex';
+  document.getElementById('print-datetime').textContent =
+    '出力日時：' + new Date().toLocaleString('ja-JP');
+  document.getElementById('print-counts').textContent =
+    `総件数：${incidents.length}件　` +
+    Object.entries(CATS).map(([cat, v]) => {
+      const n = incidents.filter(i => i.cat === cat).length;
+      return n > 0 ? `${cat}：${n}` : '';
+    }).filter(Boolean).join('　');
+});
+window.addEventListener('afterprint', () => {
+  document.getElementById('print-header').style.display = 'none';
+  document.getElementById('a2-guide').style.display = 'none';
+});
+
 
 
 // ── DRAG & DROP ──
@@ -1210,7 +1378,359 @@ function renderList() {
   });
 }
 
-// ── 共有用HTML書き出し ──
+// ── PDF出力 ──
+async function savePdf() {
+  const msg = document.getElementById('printMsg');
+  msg.style.display = 'block';
+  msg.textContent = '⏳ PDF生成中…地図を読み込んでいます';
+  closePrintModal();
+  await new Promise(r => setTimeout(r, 700));
+  try {
+    const canvas = await html2canvas(document.getElementById('mapwrap'), {
+      useCORS: true, allowTaint: true, scale: 2, logging: false,
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    // ヘッダー
+    const dateStr = new Date().toLocaleString('ja-JP');
+    pdf.setFillColor(0, 112, 204);
+    pdf.rect(0, 0, 297, 12, 'F');
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFontSize(11);
+    pdf.text('沖縄県 被害状況マップ', 8, 8);
+    pdf.setFontSize(8);
+    pdf.text(`出力日時：${dateStr}　総件数：${incidents.length}件`, 297 - 8, 8, { align: 'right' });
+
+    // 地図画像
+    const mapH = 210 - 12 - 8; // A4横の高さ - ヘッダー - 余白
+    pdf.addImage(imgData, 'JPEG', 0, 12, 297, mapH);
+
+    // 凡例
+    pdf.setTextColor(50, 50, 50);
+    pdf.setFontSize(7);
+    let lx = 4;
+    Object.entries(CATS).forEach(([cat, v]) => {
+      const n = incidents.filter(i => i.cat === cat).length;
+      if (n === 0) return;
+      const rgb = hexToRgb(v.color);
+      pdf.setFillColor(rgb.r, rgb.g, rgb.b);
+      pdf.circle(lx + 2, 210 - 4, 2, 'F');
+      pdf.text(`${cat}：${n}件`, lx + 5, 210 - 2.5);
+      lx += 38;
+    });
+
+    pdf.save(`被害状況マップ_${new Date().toISOString().slice(0,10)}.pdf`);
+    msg.style.display = 'none';
+  } catch(e) {
+    msg.textContent = '⚠️ PDF生成に失敗しました：' + e.message;
+  }
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+// ── PowerPoint出力 ──
+async function savePptx() {
+  const msg = document.getElementById('printMsg');
+  msg.style.display = 'block';
+  msg.textContent = '⏳ PowerPoint生成中…';
+  closePrintModal();
+  await new Promise(r => setTimeout(r, 700));
+  try {
+    // 地図キャプチャ
+    const canvas = await html2canvas(document.getElementById('mapwrap'), {
+      useCORS: true, allowTaint: true, scale: 1.5, logging: false,
+    });
+    const mapImg = canvas.toDataURL('image/jpeg', 0.9);
+
+    const pptx = new PptxGenJS();
+    pptx.layout = 'LAYOUT_WIDE'; // 13.33 x 7.5 inch
+
+    // ── スライド1：地図 ──
+    const s1 = pptx.addSlide();
+    s1.background = { color: 'F0F2F5' };
+
+    // タイトルバー
+    s1.addShape(pptx.ShapeType.rect, {
+      x:0, y:0, w:'100%', h:0.5,
+      fill:{ color:'0070CC' },
+    });
+    s1.addText('沖縄県 被害状況マップ', {
+      x:0.1, y:0, w:8, h:0.5,
+      fontSize:16, bold:true, color:'FFFFFF', valign:'middle',
+    });
+    s1.addText(`出力日時：${new Date().toLocaleString('ja-JP')}　総件数：${incidents.length}件`,{
+      x:8, y:0, w:5.33, h:0.5,
+      fontSize:9, color:'FFFFFF', valign:'middle', align:'right',
+    });
+
+    // 地図画像
+    s1.addImage({ data: mapImg, x:0, y:0.5, w:13.33, h:6.7 });
+
+    // 凡例バー
+    s1.addShape(pptx.ShapeType.rect, {
+      x:0, y:7.1, w:'100%', h:0.4,
+      fill:{ color:'FFFFFF' }, line:{ color:'D0D7E2', width:1 },
+    });
+    let lx = 0.2;
+    Object.entries(CATS).forEach(([cat, v]) => {
+      const n = incidents.filter(i => i.cat === cat).length;
+      if (n === 0) return;
+      const rgb = hexToRgb(v.color);
+      const hexClean = v.color.replace('#','');
+      s1.addShape(pptx.ShapeType.ellipse, {
+        x:lx, y:7.22, w:0.12, h:0.12,
+        fill:{ color: hexClean },
+      });
+      s1.addText(`${cat}：${n}件`, {
+        x:lx+0.15, y:7.15, w:1.8, h:0.3,
+        fontSize:8, color:'1A2433',
+      });
+      lx += 2.0;
+    });
+
+    // ── スライド2：インシデント一覧 ──
+    const s2 = pptx.addSlide();
+    s2.background = { color: 'FFFFFF' };
+    s2.addShape(pptx.ShapeType.rect, {
+      x:0, y:0, w:'100%', h:0.5, fill:{ color:'0070CC' },
+    });
+    s2.addText('インシデント一覧', {
+      x:0.1, y:0, w:13, h:0.5,
+      fontSize:16, bold:true, color:'FFFFFF', valign:'middle',
+    });
+
+    // テーブル
+    const rows = [
+      [
+        { text:'No.', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+        { text:'被害種別', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+        { text:'住所', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+        { text:'メモ', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+        { text:'時刻', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+        { text:'座標', options:{ bold:true, fill:{ color:'E8F0FB' }, color:'1A2433' } },
+      ],
+      ...incidents.map((inc, i) => {
+        const hexClean = (CATS[inc.cat]?.color || '#888888').replace('#','');
+        return [
+          { text: String(i+1), options:{ color:'555555' } },
+          { text: inc.cat, options:{ color: hexClean, bold:true } },
+          { text: inc.address || '—', options:{ color:'333333' } },
+          { text: inc.memo || '—', options:{ color:'555555' } },
+          { text: inc.time, options:{ color:'555555' } },
+          { text: `${inc.lat.toFixed(5)}, ${inc.lng.toFixed(5)}`, options:{ color:'888888', fontSize:7 } },
+        ];
+      }),
+    ];
+    s2.addTable(rows, {
+      x:0.2, y:0.6, w:12.9,
+      fontSize:9,
+      border:{ type:'solid', color:'D0D7E2', pt:0.5 },
+      rowH: 0.28,
+      colW: [0.4, 1.6, 3.5, 3.5, 0.6, 2.0],
+    });
+
+    pptx.writeFile({ fileName: `被害状況マップ_${new Date().toISOString().slice(0,10)}.pptx` });
+    msg.style.display = 'none';
+  } catch(e) {
+    msg.textContent = '⚠️ PowerPoint生成に失敗しました：' + e.message;
+    console.error(e);
+  }
+}
+
+// ── Excel出力 ──
+function saveExcel() {
+  if (incidents.length === 0) { alert('データがありません。'); return; }
+  const msg = document.getElementById('printMsg');
+  msg.style.display = 'block';
+  msg.textContent = '⏳ Excel生成中…';
+  closePrintModal();
+
+  try {
+    const wb = XLSX.utils.book_new();
+
+    // ── シート1：インシデント一覧 ──
+    const headerRow = ['No.','被害種別','住所','メモ','時刻','緯度','経度'];
+    const dataRows = incidents.map((inc, i) => [
+      i + 1,
+      inc.cat,
+      inc.address || '',
+      inc.memo || '',
+      inc.time,
+      inc.lat,
+      inc.lng,
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headerRow, ...dataRows]);
+
+    // 列幅設定
+    ws['!cols'] = [
+      { wch: 5 }, { wch: 18 }, { wch: 35 }, { wch: 30 },
+      { wch: 8 }, { wch: 12 }, { wch: 12 },
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'インシデント一覧');
+
+    // ── シート2：種別集計 ──
+    const summaryHeader = ['被害種別', '件数'];
+    const summaryRows = Object.keys(CATS).map(cat => [
+      cat,
+      incidents.filter(i => i.cat === cat).length,
+    ]);
+    summaryRows.push(['合計', incidents.length]);
+    const ws2 = XLSX.utils.aoa_to_sheet([summaryHeader, ...summaryRows]);
+    ws2['!cols'] = [{ wch: 20 }, { wch: 8 }];
+    XLSX.utils.book_append_sheet(wb, ws2, '種別集計');
+
+    XLSX.writeFile(wb, `被害状況マップ_${new Date().toISOString().slice(0,10)}.xlsx`);
+    msg.style.display = 'none';
+  } catch(e) {
+    msg.textContent = '⚠️ Excel生成に失敗しました：' + e.message;
+  }
+}
+
+
+function openPrintModal() {
+  document.getElementById('printModal').style.display = 'flex';
+  document.getElementById('printMsg').style.display = 'none';
+}
+function closePrintModal() {
+  document.getElementById('printModal').style.display = 'none';
+}
+
+// JPEG保存
+async function saveJpeg() {
+  const msg = document.getElementById('printMsg');
+  msg.style.display = 'block';
+  msg.textContent = '⏳ 画像を生成しています…';
+  closePrintModal();
+
+  // タイルが全部読み込まれるまで少し待つ
+  await new Promise(r => setTimeout(r, 600));
+
+  try {
+    const canvas = await html2canvas(document.getElementById('mapwrap'), {
+      useCORS: true,
+      allowTaint: true,
+      scale: 2,
+      logging: false,
+    });
+    const a = document.createElement('a');
+    a.download = `被害状況マップ_${new Date().toISOString().slice(0,10)}.jpg`;
+    a.href = canvas.toDataURL('image/jpeg', 0.92);
+    a.click();
+    msg.style.display = 'none';
+  } catch(e) {
+    msg.textContent = '⚠️ 画像生成に失敗しました。ブラウザのスクリーンショット機能をお使いください。';
+  }
+}
+
+// 印刷（A4横 / A3横 / A2=A3×2枚）
+function printAs(size) {
+  closePrintModal();
+
+  // @page スタイルを動的に挿入
+  const styleId = 'print-page-style';
+  let el = document.getElementById(styleId);
+  if (el) el.remove();
+  el = document.createElement('style');
+  el.id = styleId;
+
+  if (size === 'A4') {
+    el.textContent = `
+      @page { size: A4 landscape; margin: 8mm; }
+      @media print {
+        #topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+        body { height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; }
+        #main { display: block !important; height: auto !important; overflow: visible !important; }
+        #mapwrap { width: 100% !important; height: calc(100vh - 16mm) !important; position: relative !important; break-inside: avoid; }
+        #map { width: 100% !important; height: 100% !important; }
+        #print-header { display: block !important; }
+      }`;
+  } else if (size === 'A3') {
+    el.textContent = `
+      @page { size: A3 landscape; margin: 8mm; }
+      @media print {
+        #topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+        body { height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; }
+        #main { display: block !important; height: auto !important; overflow: visible !important; }
+        #mapwrap { width: 100% !important; height: calc(100vh - 16mm) !important; position: relative !important; break-inside: avoid; }
+        #map { width: 100% !important; height: 100% !important; }
+        #print-header { display: block !important; }
+      }`;
+  } else if (size === 'A2') {
+    // A3横2枚 → 横2分割
+    el.textContent = `
+      @page { size: A3 landscape; margin: 0; }
+      @media print {
+        #topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+        body { height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; }
+        #main { display: block !important; height: auto !important; overflow: visible !important; }
+        #mapwrap { width: 200% !important; height: 100vh !important; position: relative !important; }
+        #map { width: 100% !important; height: 100% !important; }
+        #print-header { display: flex !important; }
+      }`;
+  } else if (size === 'A1') {
+    // A3横4枚 → 横2×縦2分割
+    el.textContent = `
+      @page { size: A3 landscape; margin: 0; }
+      @media print {
+        #topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+        body { height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; }
+        #main { display: block !important; height: auto !important; overflow: visible !important; }
+        #mapwrap { width: 200% !important; height: 200vh !important; position: relative !important; }
+        #map { width: 100% !important; height: 100% !important; }
+        #print-header { display: flex !important; }
+      }`;
+  } else if (size === 'A0') {
+    // A3横8枚 → 横4×縦2分割
+    el.textContent = `
+      @page { size: A3 landscape; margin: 0; }
+      @media print {
+        #topbar, #sidebar, #pinModeOverlay, #mapinfo, #emptyState, #modal, #printModal { display: none !important; }
+        body { height: auto !important; overflow: visible !important; background: white !important; margin: 0 !important; }
+        #main { display: block !important; height: auto !important; overflow: visible !important; }
+        #mapwrap { width: 400% !important; height: 200vh !important; position: relative !important; }
+        #map { width: 100% !important; height: 100% !important; }
+        #print-header { display: flex !important; }
+      }`;
+  }
+
+  document.head.appendChild(el);
+
+  // 枚数ガイド
+  const guide = {
+    A4: 'A4横で印刷します。',
+    A3: 'A3横で印刷します。',
+    A2: 'A3横 2枚で印刷されます。\n左右に並べて貼り合わせるとA2になります。',
+    A1: 'A3横 4枚で印刷されます。\n2列×2行で並べて貼り合わせるとA1になります。',
+    A0: 'A3横 8枚で印刷されます。\n4列×2行で並べて貼り合わせるとA0になります。',
+  };
+  if (['A2','A1','A0'].includes(size)) {
+    if (!confirm(guide[size] + '\n\n続けますか？')) {
+      el.remove();
+      return;
+    }
+  }
+
+  // 地図タイルが完全に読み込まれるまで待ってから印刷
+  map.invalidateSize();
+  setTimeout(() => {
+    window.print();
+    // 印刷後にスタイルを戻す
+    setTimeout(() => {
+      el.remove();
+      map.invalidateSize();
+    }, 1000);
+  }, 800);
+}
+
+
 function exportShareHTML() {
   if (incidents.length === 0) { alert('データがありません。'); return; }
 
