@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>沖縄 防災ライブカメラ ポータル</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap');
 :root {
@@ -330,35 +328,17 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
   <div class="portal-body">
     <div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;">
 
-      <!-- 防災ダッシュボード -->
-      <div style="grid-column:1/-1">
-
-      </div>
+      <!-- キキクル危険度分布アラート -->
+      <div style="grid-column:1/-1" id="kikukuru-banner"></div>
 
       <!-- 雨雲レーダー -->
       <div style="grid-column:1/-1">
-        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-          <span>📡 雨雲レーダー（気象庁）</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span id="radar-time" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
-            <button class="tbtn" onclick="loadRadar()">↺ 更新</button>
-            <button class="tbtn" onclick="if(radarMap)radarMap.setView([26.5,128.0],7)" title="沖縄本島に戻る">🏠 沖縄</button>
-            <a class="tbtn" href="https://www.jma.go.jp/bosai/nowc/#zoom:7/lat:26.770780/lon:127.820435/colordepth:normal/elements:hrpns&slmcs&slmcs_fcst" target="_blank" style="text-decoration:none">↗ 全画面</a>
-          </div>
-        </div>
-        <div id="radar-map" style="width:100%;height:300px;border-radius:8px;overflow:hidden;background:#1a2535;position:relative;border:1px solid var(--edge)">
-          <div id="radar-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:var(--mono);font-size:11px;z-index:10">読込中…</div>
-        </div>
-        <div style="margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-          <span style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-right:2px">雨量強度:</span>
-          <div style="width:14px;height:10px;background:#99ccff;border-radius:1px"></div><span style="font-size:9px;color:var(--muted)">弱</span>
-          <div style="width:14px;height:10px;background:#0000ff;border-radius:1px;margin-left:4px"></div><span style="font-size:9px;color:var(--muted)">並</span>
-          <div style="width:14px;height:10px;background:#ffff00;border-radius:1px;margin-left:4px"></div><span style="font-size:9px;color:var(--muted)">強</span>
-          <div style="width:14px;height:10px;background:#ff6600;border-radius:1px;margin-left:4px"></div><span style="font-size:9px;color:var(--muted)">激しい</span>
-          <div style="width:14px;height:10px;background:#ff0000;border-radius:1px;margin-left:4px"></div><span style="font-size:9px;color:var(--muted)">猛烈</span>
-        </div>
+        <div class="sec-title">📡 雨雲レーダー（気象庁）</div>
+        <a href="https://www.jma.go.jp/bosai/nowc/" target="_blank" class="ext-link">
+          <span class="ext-link-name">気象庁 雨雲レーダー（ナウキャスト）を開く</span>
+          <span class="ext-link-arr">↗</span>
+        </a>
       </div>
-
       <!-- 気象警報・注意報 -->
       <div style="grid-column:1/-1">
         <div class="sec-title">気象警報・注意報 <span style="font-size:11px;font-weight:400;letter-spacing:0">（沖縄県 — 気象庁）</span>
@@ -647,7 +627,7 @@ function showTab(id){
     document.getElementById('tab-'+t).classList.toggle('active',t===id);
   });
   document.getElementById('fetch-bar').style.display=id==='river'?'flex':'none';
-  if(id==='bousaiinfo'){ loadBousaiInfo(); loadRadar(); }
+  if(id==='bousaiinfo'){ loadKikukuru(); loadBousaiInfo(); }
   // YouTubeタブを初めて開いた時にIntersectionObserverで遅延ロード開始
   if(id==='youtube' && !ytTabLoaded){
     ytTabLoaded=true;
@@ -982,6 +962,54 @@ const AREA_NAMES={
 };
 
 let bousaiInfoLoaded=false;
+// ── キキクル危険度分布アラート ──
+const KIKU_COLORS = {
+  0: null,
+  1: {bg:'#1c1600', border:'#ca8a04', text:'#fde047', emoji:'🟡'},
+  2: {bg:'#1c0000', border:'#dc2626', text:'#fca5a5', emoji:'🔴'},
+  3: {bg:'#1a0030', border:'#9333ea', text:'#d8b4fe', emoji:'🟣'},
+  4: {bg:'#000000', border:'#6b7280', text:'#e5e7eb', emoji:'⚫'},
+};
+const KIKU_ELEM_LABELS = {inund:'浸水害', land:'土砂', flood:'洪水'};
+
+async function loadKikukuru(){
+  const el = document.getElementById('kikukuru-banner');
+  if(!el) return;
+  try {
+    const res = await fetch('kikukuru.json?_='+Math.floor(Date.now()/300000));
+    if(!res.ok) return;
+    const data = await res.json();
+    if(!data.has_alert){
+      el.innerHTML = `<div style="background:#052e16;border:1px solid #166534;border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="font-size:16px">✅</span>
+        <div>
+          <span style="color:#4ade80;font-size:13px;font-weight:700">キキクル（危険度分布）― 現在、沖縄県内に危険域なし</span>
+          <span style="color:#166534;font-size:10px;font-family:var(--mono);margin-left:10px">取得: ${data.fetched_jst||''}</span>
+        </div>
+        <a href="https://www.jma.go.jp/bosai/risk/#lat:26.6/lon:127.96/zoom:8/elements:inund" target="_blank" style="margin-left:auto;font-size:11px;color:#4ade80;text-decoration:none">↗ キキクルを開く</a>
+      </div>`;
+      return;
+    }
+    // アラートあり
+    const alerts = Object.entries(data.elements||{})
+      .filter(([,v])=>v.has_alert)
+      .map(([k,v])=>{
+        const c = KIKU_COLORS[v.level]||KIKU_COLORS[1];
+        return `<span style="background:${c.bg};border:1px solid ${c.border};color:${c.text};padding:3px 10px;border-radius:4px;font-size:12px;font-weight:700;white-space:nowrap">${c.emoji} ${KIKU_ELEM_LABELS[k]||k}：${v.label}</span>`;
+      }).join('');
+    const mc = KIKU_COLORS[data.max_level]||KIKU_COLORS[1];
+    el.innerHTML = `<div style="background:${mc.bg};border:1px solid ${mc.border};border-radius:8px;padding:12px 16px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span style="font-size:18px">${mc.emoji}</span>
+        <span style="color:${mc.text};font-size:14px;font-weight:700">沖縄県内にキキクル（${data.max_label}）あり</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">${alerts}</div>
+        <a href="https://www.jma.go.jp/bosai/risk/#lat:26.6/lon:127.96/zoom:8/elements:inund" target="_blank" style="margin-left:auto;font-size:11px;color:${mc.text};opacity:.8;text-decoration:none;white-space:nowrap">↗ キキクルを開く</a>
+      </div>
+      <div style="color:${mc.border};font-size:10px;font-family:var(--mono);margin-top:6px">気象庁 危険度分布タイル解析 ― 取得: ${data.fetched_jst||''}</div>
+    </div>`;
+  } catch(e){ console.warn('kikukuru.json取得失敗',e); }
+}
+
 async function loadBousaiInfo(){
   // GitHub Actionsが生成したwarning.jsonから取得
   try{
@@ -1066,48 +1094,10 @@ function renderTyphoon(data){
     </div>`).join('');
 }
 
-// ── 雨雲レーダー（Leaflet + JMAタイル）──
-let radarMap=null, radarLayer=null;
-
-async function loadRadar(){
-  const loading=document.getElementById('radar-loading');
-  if(loading) loading.style.display='flex';
-  try{
-    const res=await fetch('https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json');
-    const times=await res.json();
-    if(!times||times.length===0){if(loading)loading.textContent='データなし';return;}
-    const vt=times[times.length-1].validtime;
-    // vtは "20260312102500" のような形式 or ISO形式の場合がある
-    let jst;
-    if(vt.match(/^\d{14}$/)){
-      // "20260312102500" → JST（JMA時刻はJST）
-      jst=new Date(`${vt.slice(0,4)}-${vt.slice(4,6)}-${vt.slice(6,8)}T${vt.slice(8,10)}:${vt.slice(10,12)}:${vt.slice(12,14)}+09:00`);
-    } else {
-      const dt=new Date(vt);
-      jst=new Date(dt.getTime()+9*3600*1000);
-    }
-    const el=document.getElementById('radar-time');
-    if(el) el.textContent=`${jst.getHours().toString().padStart(2,'0')}:${jst.getMinutes().toString().padStart(2,'0')} JST`;
-    if(loading) loading.style.display='none';
-    if(!radarMap){
-      radarMap=L.map('radar-map',{center:[26.5,128.0],zoom:7,zoomControl:true,attributionControl:false});
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(radarMap);
-    }
-    if(radarLayer){radarMap.removeLayer(radarLayer);}
-    radarLayer=L.tileLayer(
-      `https://www.jma.go.jp/bosai/jmatile/data/nowc/${vt}/none/${vt}/surf/hrpns/{z}/{x}/{y}.png`,
-      {opacity:0.7,maxZoom:10,minZoom:4}
-    ).addTo(radarMap);
-  }catch(e){
-    if(loading){loading.style.display='flex';loading.textContent='レーダー取得失敗';}
-  }
-}
-setInterval(loadRadar, 5*60*1000);
-
 // ── 防災ダッシュボード ──
 setTimeout(()=>location.reload(),10*60*1000);
 nextAt=Date.now()+10*60*1000;
-loadCameras(); loadBousaiInfo(); loadRadar(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
+loadCameras(); loadKikukuru(); loadBousaiInfo(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
 </script>
 </body>
 </html>
