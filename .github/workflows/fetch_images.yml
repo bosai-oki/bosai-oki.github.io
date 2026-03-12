@@ -237,39 +237,51 @@ jobs:
                   k['source'] = 'warning'
               print(f"キキクル取得失敗: 警報データ{len(result['kikukuru'])}市町村で代替")
 
-          # ── キキクル 危険度分布 URL調査 ──────────────────────────
+
+          # ── キキクル 危険度分布 URL調査（gzip対応・最新時刻・複数パターン）──
+          import gzip as gz
+          def fetch_gz(url):
+              import urllib.request as ur
+              req = ur.Request(url, headers={
+                  'Accept-Encoding': 'gzip, deflate',
+                  'User-Agent': 'Mozilla/5.0',
+                  'Referer': 'https://www.jma.go.jp/bosai/risk/',
+              })
+              with ur.urlopen(req, timeout=10) as r:
+                  raw = r.read()
+              if raw[:2] == b'\x1f\x8b':
+                  raw = gz.decompress(raw)
+              return raw
+
           try:
               tt_url = 'https://www.jma.go.jp/bosai/jmatile/data/risk/targetTimes.json'
-              tt_raw = json.loads(fetch(tt_url))
-              print(f"targetTimes型: {type(tt_raw)}, 件数: {len(tt_raw) if isinstance(tt_raw,list) else 'dict'}")
-              if isinstance(tt_raw, list) and tt_raw:
-                  print(f"targetTimes[0]: {tt_raw[0]}")
-                  print(f"targetTimes[-1]: {tt_raw[-1]}")
-                  # 最新時刻のキーを確認
-                  latest = tt_raw[-1] if isinstance(tt_raw[-1], dict) else None
-                  if latest:
-                      print(f"最新エントリキー: {list(latest.keys())}")
-                      # 時刻キーからデータURLを組み立てて試す
-                      vt = latest.get('validtime') or latest.get('valid_time') or latest.get('time') or ''
-                      it = latest.get('initialtime') or latest.get('initial_time') or vt
-                      print(f"validtime={vt!r}, initialtime={it!r}")
-                      for url_tmpl in [
-                          f'https://www.jma.go.jp/bosai/jmatile/data/risk/{vt}/{it}/surf/municipality/47/contents.json',
-                          f'https://www.jma.go.jp/bosai/jmatile/data/risk/{vt}/{it}/surf/contents.json',
-                          f'https://www.jma.go.jp/bosai/jmatile/data/risk/{vt}/surf/municipality/47/contents.json',
-                          f'https://www.jma.go.jp/bosai/jmatile/data/risk/{vt}/surf/contents.json',
-                      ]:
-                          try:
-                              r = fetch(url_tmpl)
-                              print(f"キキクルデータURL成功: {url_tmpl}")
-                              print(f"  先頭300bytes: {r[:300]!r}")
-                              break
-                          except Exception as eu:
-                              print(f"  失敗: {url_tmpl.split('risk/')[1][:60]} → {eu}")
-              elif isinstance(tt_raw, dict):
-                  print(f"targetTimesキー: {list(tt_raw.keys())[:5]}")
+              tt_raw = json.loads(fetch_gz(tt_url))
+              latest = tt_raw[0]  # [0]が最新
+              bt = latest.get('basetime','')
+              vt = latest.get('validtime','')
+              elements = latest.get('elements', [])
+              print(f"最新: basetime={bt}, validtime={vt}")
+              print(f"elements: {elements}")
+              # 市区町村レベルの集計データURLを試す
+              for url_tmpl in [
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/municipality/47/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/inund/municipality/471000.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/surf/inund/47/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/{bt}/{vt}/none/none/surf/municipality/471000/contents.json',
+                  f'https://www.jma.go.jp/bosai/jmatile/data/risk/none/{vt}/surf/municipality/471000/contents.json',
+              ]:
+                  try:
+                      r = fetch_gz(url_tmpl)
+                      path_short = url_tmpl.split('risk/')[1][:80]
+                      print(f"キキクルURL成功: {path_short}")
+                      print(f"  先頭400bytes: {r[:400]!r}")
+                      break
+                  except Exception as eu:
+                      path_short = url_tmpl.split('risk/')[1][:80]
+                      print(f"  失敗: {path_short} → {eu}")
           except Exception as e:
-              print(f"targetTimes NG: {type(e).__name__}: {e}")
+              print(f"キキクルURL調査NG: {type(e).__name__}: {e}")
           with open('dashboard.json', 'w', encoding='utf-8') as f:
               json.dump(result, f, ensure_ascii=False, indent=2)
           print(f"dashboard.json 生成完了 / AMeDAS:{len(result['amedas'])} 河川:{len(result['rivers'])} ダム:{len(result['dams'])} キキクル:{len(result['kikukuru'])}")
