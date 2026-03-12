@@ -343,6 +343,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
           <div style="display:flex;align-items:center;gap:8px">
             <span id="radar-time" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
             <button class="tbtn" onclick="loadRadar()">↺ 更新</button>
+            <button class="tbtn" onclick="if(radarMap)radarMap.setView([26.5,128.0],7)" title="沖縄本島に戻る">🏠 沖縄</button>
             <a class="tbtn" href="https://www.jma.go.jp/bosai/nowc/#zoom:7/lat:26.770780/lon:127.820435/colordepth:normal/elements:hrpns&slmcs&slmcs_fcst" target="_blank" style="text-decoration:none">↗ 全画面</a>
           </div>
         </div>
@@ -1135,7 +1136,10 @@ async function renderDashboard(){
 
   const rivers=data.rivers||[], amedas=data.amedas||[], dams=data.dams||[], kiki=data.kikukuru||[];
   const fetched=data.fetched_jst||'';
-  const noData='<div style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:12px">データ取得中…</div>';
+  // JSONは取得できたがデータが空の場合はAPIエラーと判断
+  const noData=fetched
+    ? '<div style="color:#f87171;font-family:var(--mono);font-size:11px;padding:12px">⚠ API取得失敗（次回更新時に再試行）</div>'
+    : '<div style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:12px">データ取得中…</div>';
 
   const riverCards=rivers.length?rivers.map(r=>{
     const k=dbRiverLevel(r),a=DB_ALERT[k],mx=(r.limit?.critical||5)*1.2;
