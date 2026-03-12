@@ -1078,9 +1078,15 @@ async function loadRadar(){
     const times=await res.json();
     if(!times||times.length===0){if(loading)loading.textContent='データなし';return;}
     const vt=times[times.length-1].validtime;
-    // JST表示
-    const dt=new Date(vt.replace(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z/,'$1-$2-$3T$4:$5:$6Z'));
-    const jst=new Date(dt.getTime()+9*3600*1000);
+    // vtは "20260312102500" のような形式 or ISO形式の場合がある
+    let jst;
+    if(vt.match(/^\d{14}$/)){
+      // "20260312102500" → JST（JMA時刻はJST）
+      jst=new Date(`${vt.slice(0,4)}-${vt.slice(4,6)}-${vt.slice(6,8)}T${vt.slice(8,10)}:${vt.slice(10,12)}:${vt.slice(12,14)}+09:00`);
+    } else {
+      const dt=new Date(vt);
+      jst=new Date(dt.getTime()+9*3600*1000);
+    }
     const el=document.getElementById('radar-time');
     if(el) el.textContent=`${jst.getHours().toString().padStart(2,'0')}:${jst.getMinutes().toString().padStart(2,'0')} JST`;
     if(loading) loading.style.display='none';
@@ -1196,9 +1202,16 @@ async function renderDashboard(){
   const T='color:#e2e8f0;font-size:13px;font-weight:700;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1e293b';
 
   el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
-    <div style="${P}"><div style="${T}">🌊 河川水位</div>${riverCards}<div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">${['watch','warning','danger','critical'].map(k=>`<div style="display:flex;align-items:center;gap:3px"><div style="width:2px;height:12px;background:${DB_ALERT[k].color};border-radius:1px"></div><span style="color:#475569;font-size:10px">${DB_ALERT[k].label}</span></div>`).join('')}</div></div>
+    <div style="${P}">
+      <div style="${T}">🌊 河川水位</div>${riverCards}
+      <a href="https://www.river.go.jp/kawabou/out/s_rslt.do?ken=47" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;color:#60a5fa;text-decoration:none">↗ 川の防災情報（国交省）</a>
+    </div>
     <div style="${P}"><div style="${T}">🌧 アメダス（雨量観測）</div>${amedasCards}</div>
-    <div style="${P}"><div style="${T}">🏗 ダム貯水・放流状況</div>${damCards}</div>
+    <div style="${P}">
+      <div style="${T}">🏗 ダム貯水・放流状況</div>${damCards}
+      <div style="color:#334155;font-family:var(--mono);font-size:10px;padding:6px 0">直接取得不可のため外部サイトで確認</div>
+      <a href="https://www.river.go.jp/kawabou/out/dam_rslt.do?pref=47" target="_blank" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#60a5fa;text-decoration:none">↗ ダム情報（国交省）</a>
+    </div>
     <div style="${P}"><div style="${T}">🔴 キキクル（危険度分布）</div>${kikiRows}</div>
     <div style="${P};grid-column:span 2"><div style="${T}">📊 状況サマリー</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">${statCards}</div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
