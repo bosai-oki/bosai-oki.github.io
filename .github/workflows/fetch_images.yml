@@ -116,95 +116,69 @@ jobs:
               with urllib.request.urlopen(req, timeout=timeout) as r:
                   return r.read()
 
-          # ── AMeDAS ──────────────────────────────────────────
-          AMEDAS_STATIONS = {
-              '91197': {'name': '那覇',   'loc': '那覇市'},
-              '91068': {'name': '名護',   'loc': '名護市'},
-              '93012': {'name': '久米島', 'loc': '久米島町'},
-              '94081': {'name': '宮古島', 'loc': '宮古島市'},
-              '95002': {'name': '石垣島', 'loc': '石垣市'},
-          }
-          WIND_DIR = ['','北','北北東','北東','東北東','東','東南東','南東','南南東',
-                      '南','南南西','南西','西南西','西','西北西','北西','北北西']
-          try:
-              from datetime import datetime as DT
-              latest_time = fetch('https://www.jma.go.jp/bosai/amedas/data/latest_time.txt').decode().strip()
-              print(f"AMeDAS latest_time raw: {latest_time!r}")
-              # ISO形式 "2026-03-12T19:50:00+09:00" → "20260312_195000"（丸めずそのまま使う）
-              if 'T' in latest_time:
-                  dt_obj = DT.fromisoformat(latest_time)
-              else:
-                  dt_obj = DT.strptime(latest_time[:14], '%Y%m%d%H%M%S').replace(tzinfo=timezone(timedelta(hours=9)))
-              ts = dt_obj.strftime('%Y%m%d_%H%M%S')
-              print(f"AMeDAS ts: {ts}")
-              for code, info in AMEDAS_STATIONS.items():
-                  try:
-                      raw_full = json.loads(fetch(
-                          f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{ts}.json'
-                      ))
-                      raw = list(raw_full.values())[0] if raw_full else {}
-                      def v(key, obs=raw):
-                          d = obs.get(key)
-                          if isinstance(d, list) and len(d) >= 2 and d[1] == 0:
-                              return d[0]
-                          return None
-                      wd = v('windDirection')
-                      result['amedas'].append({
-                          **info,
-                          'rainfall1h':  v('precipitation1h')  or 0,
-                          'rainfall24h': v('precipitation24h') or 0,
-                          'temp':        v('temp'),
-                          'wind':        f"{WIND_DIR[int(wd)] if wd is not None else '-'} {v('wind') or 0}m/s",
-                      })
-                      print(f"AMeDAS {info['name']}: OK temp={v('temp')} 1h={v('precipitation1h') or 0}mm")
-                  except Exception as e:
-                      print(f"AMeDAS {info['name']}: NG ({e})")
-          except Exception as e:
-              print(f"AMeDAS NG: {e}")
-
-          # ── 河川水位・ダム（国交省APIはアクセス制限のためスキップ）────
-          # result['rivers'] / result['dams'] は空のまま
-
-          # ── キキクル（気象庁 警報JSONから洪水・土砂危険度を算出）────────
-          # warning/471000.json のareaTypes > areas > warnings から危険レベルを算出
-          # 警報(発表) → 3危険、注意報(発表) → 2警戒、なし → 0平常
-          FLOOD_KEYWORDS   = ['洪水', '浸水']
-          SEDIMENT_KEYWORDS = ['土砂', '大雨']
+          # ── キキクル（気象庁 警報JSONから浸水・洪水・土砂の3種を取得）────
+          # 沖縄県全41市町村を動的に取得（ハードコードなし）
           KIKI_LABELS = {0:'平常', 1:'注意', 2:'警戒', 3:'危険', 4:'非常に危険', 5:'最大級'}
+          # 警報の種別キーワード → 分類マッピング
+          TYPE_MAP = {
+              '浸水': ['浸水'],
+              '洪水': ['洪水'],
+              '土砂': ['土砂'],
+          }
+          # 警報 → レベル3、注意報 → レベル2
+          def warning_level(wtype, status):
+              if status != '発表':
+                  return 0
+              if '警報' in wtype and '注意報' not in wtype:
+                  return 3
+              if '注意報' in wtype:
+                  return 2
+              return 1
+
           try:
               w_url = 'https://www.jma.go.jp/bosai/warning/data/warning/471000.json'
               w_raw = json.loads(fetch(w_url))
-              print(f"警報JSON取得OK: keys={list(w_raw.keys())[:5]}")
-              area_levels = {}
-              for at in (w_raw.get('areaTypes') or []):
-                  for area in (at.get('areas') or []):
-                      name = area.get('name', '')
-                      warnings = area.get('warnings') or []
-                      max_level = 0
-                      for w in warnings:
-                          wtype  = w.get('type', '')
-                          status = w.get('status', '')
-                          if status != '発表': continue
-                          # 警報 → 3, 注意報 → 2
-                          is_alert = '警報' in wtype
-                          is_adv   = '注意報' in wtype
-                          related  = any(k in wtype for k in FLOOD_KEYWORDS + SEDIMENT_KEYWORDS)
-                          if related:
-                              lv = 3 if is_alert else 2 if is_adv else 1
-                              max_level = max(max_level, lv)
-                      if name and name not in area_levels:
-                          area_levels[name] = max_level
-              # 代表地域のみ表示
-              SHOW_AREAS = ['那覇市','宜野湾市','浦添市','名護市','糸満市','沖縄市',
-                            '国頭村','大宜味村','東村','中城村','北中城村','石垣市']
-              for area_name in SHOW_AREAS:
-                  lv = area_levels.get(area_name, 0)
+              area_data = {}  # {area_name: {'浸水':0, '洪水':0, '土砂':0}}
+
+              # areaTypes を市区町村レベルで走査（最も細かい粒度を使う）
+              # areaTypes[0]=一次細分区域, areaTypes[1]=市町村等, areaTypes[2]=市区町村等
+              best_areas = []
+              for at in reversed(w_raw.get('areaTypes') or []):
+                  areas = at.get('areas') or []
+                  if len(areas) > len(best_areas):
+                      best_areas = areas
+                  if len(areas) >= 30:  # 市町村レベルなら十分
+                      break
+
+              print(f"キキクル対象エリア数: {len(best_areas)}")
+              for area in best_areas:
+                  name = area.get('name', '').strip()
+                  if not name:
+                      continue
+                  levels = {'浸水': 0, '洪水': 0, '土砂': 0}
+                  for w in (area.get('warnings') or []):
+                      wtype  = w.get('type', '')
+                      status = w.get('status', '')
+                      lv = warning_level(wtype, status)
+                      if lv == 0:
+                          continue
+                      for cat, keywords in TYPE_MAP.items():
+                          if any(k in wtype for k in keywords):
+                              levels[cat] = max(levels[cat], lv)
+                  area_data[name] = levels
+
+              for name, levels in area_data.items():
                   result['kikukuru'].append({
-                      'area':  area_name,
-                      'level': lv,
-                      'label': KIKI_LABELS.get(lv, '平常'),
+                      'area':    name,
+                      'shinsu':  levels['浸水'],
+                      'kouzui':  levels['洪水'],
+                      'dosa':    levels['土砂'],
+                      'level':   max(levels.values()),
+                      'label':   KIKI_LABELS.get(max(levels.values()), '平常'),
                   })
-              print(f"キキクル: {len(result['kikukuru'])}地域 (警報発表中: {sum(1 for k in result['kikukuru'] if k['level']>0)}地域)")
+
+              alert_count = sum(1 for k in result['kikukuru'] if k['level'] > 0)
+              print(f"キキクル取得: {len(result['kikukuru'])}市町村 (警戒以上: {alert_count}市町村)")
           except Exception as e:
               print(f"キキクル NG: {type(e).__name__}: {e}")
           with open('dashboard.json', 'w', encoding='utf-8') as f:
