@@ -91,7 +91,7 @@ line-height: 1;
 
 .top-btns { display: flex; gap: 8px; }
 .btn {
-background: transparent;
+background: #f0f2f5;
 border: 1px solid var(–border);
 color: var(–text);
 padding: 6px 14px;
@@ -100,10 +100,13 @@ font-size: 11px;
 cursor: pointer;
 letter-spacing: 1px;
 transition: all 0.15s;
+border-radius: 4px;
 }
-.btn:hover { border-color: var(–accent); color: var(–accent); }
-.btn.primary { border-color: var(–accent); color: var(–accent); }
-.btn.danger-btn { border-color: var(–danger); color: var(–danger); }
+.btn:hover { border-color: var(–accent); color: var(–accent); background: #e8f0fb; }
+.btn.primary { border-color: var(–accent); color: #fff; background: var(–accent); }
+.btn.primary:hover { background: #005bb0; border-color: #005bb0; }
+.btn.danger-btn { border-color: var(–danger); color: var(–danger); background: #fff0f0; }
+.btn.danger-btn:hover { background: #ffe0e0; }
 
 /* ── MAIN LAYOUT ── */
 #main { display: flex; flex: 1; overflow: hidden; }
