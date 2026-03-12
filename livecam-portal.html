@@ -332,8 +332,7 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
 
       <!-- 防災ダッシュボード -->
       <div style="grid-column:1/-1">
-        <div class="sec-title">防災情報ダッシュボード</div>
-        <div id="bousai-dashboard"></div>
+
       </div>
 
       <!-- 雨雲レーダー -->
@@ -648,7 +647,7 @@ function showTab(id){
     document.getElementById('tab-'+t).classList.toggle('active',t===id);
   });
   document.getElementById('fetch-bar').style.display=id==='river'?'flex':'none';
-  if(id==='bousaiinfo'){ loadBousaiInfo(); renderDashboard(); loadRadar(); }
+  if(id==='bousaiinfo'){ loadBousaiInfo(); loadRadar(); }
   // YouTubeタブを初めて開いた時にIntersectionObserverで遅延ロード開始
   if(id==='youtube' && !ytTabLoaded){
     ytTabLoaded=true;
@@ -1106,95 +1105,9 @@ async function loadRadar(){
 setInterval(loadRadar, 5*60*1000);
 
 // ── 防災ダッシュボード ──
-async function renderDashboard(){
-  const el=document.getElementById('bousai-dashboard');
-  if(!el)return;
-
-  let data={kikukuru:[],fetched_jst:''};
-  try{
-    const res=await fetch('dashboard.json?_='+Math.floor(Date.now()/300000));
-    if(res.ok) data=await res.json();
-  }catch(e){ console.warn('dashboard.json取得失敗',e); }
-
-  const warns=data.kikukuru||[];
-  const fetched=data.fetched_jst||'';
-
-  // レベル → 色（0=発表なし、2=注意報、3=警報、5=特別警報）
-  const LC={0:'#475569',2:'#facc15',3:'#f87171',5:'#ffffff'};
-  const LB={0:'#0f172a', 2:'#1c1600',3:'#1c0000',5:'#7f1d1d'};
-  const LL={0:'発表なし',2:'注意報',3:'警  報',5:'特別警報'};
-
-  function cell(lv){
-    const c=LC[lv]??LC[0], bg=LB[lv]??LB[0], label=LL[lv]??'–';
-    const fw=lv>0?700:400;
-    return `<td style="padding:5px 8px;text-align:center;background:${bg};color:${c};font-size:11px;font-weight:${fw};border:1px solid #1e293b;white-space:nowrap;font-family:var(--mono)">${label}</td>`;
-  }
-
-  const P='background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px';
-  const T='color:#e2e8f0;font-size:13px;font-weight:700;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1e293b';
-
-  const alertAreas = warns.filter(k=>k.level>0);
-  const sorted = [...alertAreas, ...warns.filter(k=>k.level===0)];
-
-  const tableRows = sorted.map(k=>`<tr>
-    <td style="padding:5px 10px;color:${k.level>0?'#e2e8f0':'#475569'};font-size:12px;border:1px solid #1e293b;white-space:nowrap">${k.area}</td>
-    ${cell(k.shinsu||0)}
-    ${cell(k.kouzui||0)}
-    ${cell(k.dosa||0)}
-  </tr>`).join('');
-
-  const warnPanel = warns.length
-    ? `<div style="${P}">
-        <div style="${T}">⚠️ 気象警報・注意報（浸水害／洪水／土砂災害）<span style="font-size:10px;font-weight:400;color:var(--muted);margin-left:8px">気象庁 発表情報</span></div>
-        ${alertAreas.length>0
-          ? `<div style="background:#450a0a;border:1px solid #dc2626;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fca5a5;font-family:var(--mono)">
-              🚨 警報・注意報 発表中：${alertAreas.map(k=>k.area).join('・')}
-             </div>`
-          : `<div style="background:#052e16;border:1px solid #166534;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80;font-family:var(--mono)">
-              ✅ 現在、警報・注意報の発表はありません
-             </div>`}
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr>
-              <th style="padding:6px 10px;text-align:left;color:#64748b;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">市区町村</th>
-              <th style="padding:6px 8px;text-align:center;color:#60a5fa;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">🌊 浸水害</th>
-              <th style="padding:6px 8px;text-align:center;color:#34d399;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">🏞 洪水</th>
-              <th style="padding:6px 8px;text-align:center;color:#fb923c;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">⛰ 土砂</th>
-            </tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
-          ${[{l:2,t:'注意報'},{l:3,t:'警報'},{l:5,t:'特別警報'}].map(x=>`
-            <div style="display:flex;align-items:center;gap:5px">
-              <div style="width:28px;height:12px;border-radius:2px;background:${LB[x.l]};border:1px solid ${LC[x.l]}"></div>
-              <span style="color:#64748b;font-size:10px">${x.t}</span>
-            </div>`).join('')}
-          <span style="color:#334155;font-size:10px;margin-left:auto;font-family:var(--mono)">${fetched?'取得: '+fetched:''}</span>
-        </div>
-      </div>`
-    : `<div style="${P};color:var(--muted);font-family:var(--mono);font-size:11px">警報情報読込中…</div>`;
-
-  // リンクパネル
-  const linkPanel=`<div style="${P}">
-    <div style="${T}">🔗 防災関連リンク</div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="https://www.jma.go.jp/bosai/warning/#area_type=class20s&area_code=471000" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">⚠️ 警報・注意報（気象庁）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.jma.go.jp/bosai/risk/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🔴 キキクル 危険度分布（気象庁）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.river.go.jp/kawabou/out/s_rslt.do?ken=47" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🌊 川の防災情報・水位（国交省）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.river.go.jp/kawabou/out/dam_rslt.do?pref=47" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🏗 ダム情報（国交省）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.jma.go.jp/bosai/amedas/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🌧 アメダス 雨量・気温（気象庁）</span><span class="ext-link-arr">↗</span></a>
-    </div>
-  </div>`;
-
-  el.innerHTML=`<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;align-items:start">
-    ${warnPanel}
-    ${linkPanel}
-  </div>`;
-}
 setTimeout(()=>location.reload(),10*60*1000);
 nextAt=Date.now()+10*60*1000;
-loadCameras(); loadBousaiInfo(); renderDashboard(); loadRadar(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
+loadCameras(); loadBousaiInfo(); loadRadar(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
 </script>
 </body>
 </html>
