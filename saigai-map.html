@@ -586,6 +586,7 @@ overflow-y: auto;
   </div>
 
   <div class="top-btns">
+    <button class="btn primary" onclick="exportShareHTML()">📤 共有用HTMLを書き出す</button>
     <button class="btn" onclick="exportJSON()">EXPORT JSON</button>
     <button class="btn" onclick="importJSON()">IMPORT JSON</button>
     <button class="btn danger-btn" onclick="clearAll()">CLEAR ALL</button>
@@ -1209,70 +1210,254 @@ function renderList() {
   });
 }
 
-// ── EXPORT / IMPORT ──
-function exportJSON() {
+// ── 共有用HTML書き出し ──
+function exportShareHTML() {
   if (incidents.length === 0) { alert('データがありません。'); return; }
-  const data = incidents.map(i => ({
-    id: i.id,
-    lat: i.lat,
-    lng: i.lng,
-    cat: i.cat,
-    memo: i.memo,
-    time: i.time,
-    address: i.address || null,
-    imgUrl: i.imgUrl,
-  }));
-  const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), incidents: data }, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `saigai-map_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
+
+  const dateStr = new Date().toLocaleString('ja-JP');
+  const incJSON = JSON.stringify(incidents.map(i => ({
+    id: i.id, lat: i.lat, lng: i.lng, cat: i.cat,
+    memo: i.memo, time: i.time, address: i.address || null, imgUrl: i.imgUrl || null,
+  })));
+
+  const CATS_JSON = JSON.stringify({
+    '浸水・冠水':        { color: '#1a7fd4' },
+    '土砂崩れ':          { color: '#a05c10' },
+    '道路損壊・通行止め': { color: '#c47d00' },
+    '建物被害':          { color: '#d42020' },
+    '人的被害':          { color: '#8b20cc' },
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>被害状況マップ（共有版） ${dateStr}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"><\/script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Meiryo','Noto Sans JP',sans-serif; background:#f0f2f5; color:#1a2433; }
+#header {
+  background:#fff; border-bottom:3px solid #0070cc;
+  padding:12px 20px; display:flex; align-items:center; gap:12px;
+  flex-wrap:wrap;
+}
+#header h1 { font-size:16px; color:#0070cc; font-weight:700; }
+#header .sub { font-size:11px; color:#6b7a8d; }
+#header .badge {
+  margin-left:auto; background:#fff3cd; border:1px solid #ffc107;
+  color:#856404; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:600;
+}
+#stats {
+  background:#fff; border-bottom:1px solid #d0d7e2;
+  padding:8px 20px; display:flex; gap:20px; flex-wrap:wrap;
+}
+.stat-item { display:flex; align-items:center; gap:6px; font-size:13px; }
+.stat-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+#map { width:100%; height:60vh; }
+#list { background:#fff; border-top:1px solid #d0d7e2; }
+.list-hdr {
+  padding:10px 16px; font-size:11px; font-weight:700; color:#6b7a8d;
+  letter-spacing:1px; border-bottom:1px solid #eef0f3; background:#f8f9fb;
+}
+.inc-row {
+  display:flex; gap:10px; padding:10px 16px;
+  border-bottom:1px solid #eef0f3; cursor:pointer;
+  transition:background 0.15s; align-items:flex-start;
+}
+.inc-row:hover { background:#f0f6ff; }
+.inc-dot2 { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.inc-cat2 { font-size:12px; font-weight:700; }
+.inc-addr { font-size:11px; color:#6b7a8d; margin-top:2px; }
+.inc-memo { font-size:11px; color:#1a2433; margin-top:2px; font-style:italic; }
+.inc-time2 { font-size:10px; color:#aaa; margin-left:auto; flex-shrink:0; }
+.leaflet-popup-content-wrapper { border-radius:6px !important; box-shadow:0 4px 16px rgba(0,0,0,0.15) !important; }
+.popup-img { width:100%; height:140px; object-fit:cover; border-radius:4px; margin-bottom:8px; }
+.popup-cat { font-size:12px; font-weight:700; margin-bottom:4px; }
+.popup-meta { font-size:11px; color:#6b7a8d; line-height:1.7; }
+.popup-memo { margin-top:6px; font-size:11px; background:#f4f6f9; padding:5px 8px; border-radius:4px; border-left:2px solid #d0d7e2; }
+#footer { padding:10px 16px; font-size:10px; color:#aaa; text-align:center; background:#f8f9fb; border-top:1px solid #eef0f3; }
+@media(max-width:700px){ #map{ height:55vh; } }
+</style>
+
+</head>
+<body>
+<div id="header">
+  <span style="font-size:24px">⚠️</span>
+  <div>
+    <h1>沖縄県 被害状況マップ</h1>
+    <div class="sub">作成日時：${dateStr}</div>
+  </div>
+  <div class="badge">📋 読み取り専用</div>
+</div>
+<div id="stats"></div>
+<div id="map"></div>
+<div id="list">
+  <div class="list-hdr">▸ インシデント一覧</div>
+  <div id="incList"></div>
+</div>
+<div id="footer">このファイルは沖縄県防災マップシステムで書き出されました</div>
+<script>
+const INCIDENTS = ${incJSON};
+const CATS = ${CATS_JSON};
+
+// 統計
+const statsEl = document.getElementById(‘stats’);
+const counts = {};
+Object.keys(CATS).forEach(c => counts[c] = 0);
+INCIDENTS.forEach(i => { if(counts[i.cat]!==undefined) counts[i.cat]++; });
+Object.entries(counts).forEach(([cat, n]) => {
+if(n===0) return;
+const d = document.createElement(‘div’);
+d.className=‘stat-item’;
+d.innerHTML=`<span class="stat-dot" style="background:\${CATS[cat].color}"></span>${cat}：<strong>${n}件</strong>`;
+statsEl.appendChild(d);
+});
+const tot = document.createElement(‘div’);
+tot.className=‘stat-item’;
+tot.innerHTML=`<strong>合計 ${INCIDENTS.length}件</strong>`;
+statsEl.prepend(tot);
+
+// 地図
+const map = L.map(‘map’).setView([26.45, 127.93], 11);
+L.tileLayer(‘https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png’,{ maxZoom:19 }).addTo(map);
+
+const shortLabel = {
+‘浸水・冠水’:‘💧 浸水’,‘土砂崩れ’:‘⛰️ 土砂’,
+‘道路損壊・通行止め’:‘🚧 道路’,‘建物被害’:‘🏠 建物’,‘人的被害’:‘👤 人的’
+};
+const markerMap = {};
+
+INCIDENTS.forEach(inc => {
+const col = CATS[inc.cat]?.color || ‘#888’;
+const lbl = shortLabel[inc.cat] || inc.cat;
+const icon = L.divIcon({
+className:’’,
+html:`<div style="position:relative;display:inline-flex;flex-direction:column;align-items:center;">
+<div style="background:\${col};color:#fff;font-size:11px;font-family:Meiryo,sans-serif;font-weight:700;padding:3px 7px;border-radius:10px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.25);border:1.5px solid rgba(255,255,255,0.8)">${lbl}</div>
+<div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid \${col};margin-top:-1px"></div>
+<div style="width:8px;height:8px;background:\${col};border:2px solid white;border-radius:50%;margin-top:-1px;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>
+</div>`,
+iconSize:[60,48], iconAnchor:[30,48],
+});
+const addrHtml = inc.address ? `🏠 ${inc.address}<br>` : ‘’;
+const popup = `<div style="min-width:200px">
+${inc.imgUrl ? `<img class="popup-img" src="\${inc.imgUrl}">` : ‘’}
+<div class="popup-cat" style="color:\${col}">● ${inc.cat}</div>
+<div class="popup-meta">${addrHtml}🌐 ${inc.lat.toFixed(5)}, ${inc.lng.toFixed(5)}<br>🕐 ${inc.time}</div>
+${inc.memo ? `<div class="popup-memo">${inc.memo}</div>` : ‘’}
+
+  </div>\`;
+  const m = L.marker([inc.lat, inc.lng], {icon}).addTo(map);
+  m.bindPopup(popup, {maxWidth:280});
+  markerMap[inc.id] = m;
+});
+
+// 全マーカーが収まるようにズーム
+if(INCIDENTS.length > 0) {
+const group = L.featureGroup(Object.values(markerMap));
+map.fitBounds(group.getBounds().pad(0.15));
+}
+
+// リスト
+const listEl = document.getElementById(‘incList’);
+INCIDENTS.forEach(inc => {
+const col = CATS[inc.cat]?.color || ‘#888’;
+const div = document.createElement(‘div’);
+div.className=‘inc-row’;
+div.innerHTML=`
+<span class="inc-dot2" style="background:\${col}"></span>
+<div style="flex:1;min-width:0">
+<div class="inc-cat2" style="color:\${col}">${inc.cat}</div>
+<div class="inc-addr">${inc.address || (inc.lat.toFixed(4)+’, ’+inc.lng.toFixed(4))}</div>
+${inc.memo ? `<div class="inc-memo">”${inc.memo}”</div>` : ‘’}
+</div>
+<span class="inc-time2">${inc.time}</span>
+`;
+div.onclick = () => {
+map.flyTo([inc.lat, inc.lng], 16, {duration:0.8});
+markerMap[inc.id]?.openPopup();
+window.scrollTo({top:0, behavior:‘smooth’});
+};
+listEl.appendChild(div);
+});
+</script>
+
+</body>
+</html>`;
+
+const blob = new Blob([html], { type: ‘text/html;charset=utf-8’ });
+const a = document.createElement(‘a’);
+a.href = URL.createObjectURL(blob);
+a.download = `被害状況マップ_${new Date().toISOString().slice(0,10)}.html`;
+a.click();
+}
+
+function exportJSON() {
+if (incidents.length === 0) { alert(‘データがありません。’); return; }
+const data = incidents.map(i => ({
+id: i.id,
+lat: i.lat,
+lng: i.lng,
+cat: i.cat,
+memo: i.memo,
+time: i.time,
+address: i.address || null,
+imgUrl: i.imgUrl,
+}));
+const blob = new Blob([JSON.stringify({ version: 1, exported: new Date().toISOString(), incidents: data }, null, 2)], { type: ‘application/json’ });
+const a = document.createElement(‘a’);
+a.href = URL.createObjectURL(blob);
+a.download = `saigai-map_${new Date().toISOString().slice(0,10)}.json`;
+a.click();
 }
 
 function importJSON() {
-  document.getElementById('importInput').click();
+document.getElementById(‘importInput’).click();
 }
-document.getElementById('importInput').addEventListener('change', function(e) {
-  const f = e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      if (!data.incidents) throw new Error('invalid');
-      if (!confirm(`${data.incidents.length}件のデータを読み込みます。現在のデータは保持されます。`)) return;
-      data.incidents.forEach(inc => {
-        if (!incidents.find(i => i.id === inc.id)) {
-          incidents.push(inc);
-          markers[inc.id] = createMarker(inc);
-          // 住所がなければ再取得
-          if (!inc.address) {
-            fetchAddress(inc.lat, inc.lng).then(addr => {
-              inc.address = addr;
-              if (markers[inc.id]) markers[inc.id].setPopupContent(buildPopup(inc));
-              renderList();
-            });
-          }
-        }
-      });
-      updateUI();
-      if (data.incidents.length > 0) {
-        const last = data.incidents[data.incidents.length - 1];
-        map.flyTo([last.lat, last.lng], 12);
-      }
-    } catch { alert('読み込みに失敗しました。'); }
-  };
-  r.readAsText(f);
-  this.value = '';
+document.getElementById(‘importInput’).addEventListener(‘change’, function(e) {
+const f = e.target.files[0];
+if (!f) return;
+const r = new FileReader();
+r.onload = ev => {
+try {
+const data = JSON.parse(ev.target.result);
+if (!data.incidents) throw new Error(‘invalid’);
+if (!confirm(`${data.incidents.length}件のデータを読み込みます。現在のデータは保持されます。`)) return;
+data.incidents.forEach(inc => {
+if (!incidents.find(i => i.id === inc.id)) {
+incidents.push(inc);
+markers[inc.id] = createMarker(inc);
+// 住所がなければ再取得
+if (!inc.address) {
+fetchAddress(inc.lat, inc.lng).then(addr => {
+inc.address = addr;
+if (markers[inc.id]) markers[inc.id].setPopupContent(buildPopup(inc));
+renderList();
+});
+}
+}
+});
+updateUI();
+if (data.incidents.length > 0) {
+const last = data.incidents[data.incidents.length - 1];
+map.flyTo([last.lat, last.lng], 12);
+}
+} catch { alert(‘読み込みに失敗しました。’); }
+};
+r.readAsText(f);
+this.value = ‘’;
 });
 
 function clearAll() {
-  if (incidents.length === 0) return;
-  if (!confirm(`全${incidents.length}件のデータを削除しますか？`)) return;
-  incidents = [];
-  Object.values(markers).forEach(m => map.removeLayer(m));
-  markers = {};
-  updateUI();
+if (incidents.length === 0) return;
+if (!confirm(`全${incidents.length}件のデータを削除しますか？`)) return;
+incidents = [];
+Object.values(markers).forEach(m => map.removeLayer(m));
+markers = {};
+updateUI();
 }
 
 // init
