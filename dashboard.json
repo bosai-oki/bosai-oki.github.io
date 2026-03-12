@@ -1,7 +1,280 @@
 {
-  "fetched_jst": "2026-03-12 22:23:34",
+  "fetched_jst": "2026-03-12 22:31:24",
   "amedas": [],
   "rivers": [],
   "dams": [],
-  "kikukuru": []
+  "kikukuru": [
+    {
+      "area": "那覇市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "石垣市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "糸満市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "沖縄市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "4721000",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "豊見城市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "うるま市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "宮古島市",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "4721500",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "国頭村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "大宜味村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "東村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "今帰仁村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "本部町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "恩納村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "宜野座村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "金武町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "伊江村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "読谷村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "嘉手納町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "北谷町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "北中城村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "中城村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "西原町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "与那原町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "八重瀬町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 2,
+      "level": 2,
+      "label": "警戒"
+    },
+    {
+      "area": "渡嘉敷村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "座間味村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "粟国村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "渡名喜村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "伊平屋村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "伊是名村",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "久米島町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    },
+    {
+      "area": "八重瀬町",
+      "shinsu": 2,
+      "kouzui": 2,
+      "dosa": 3,
+      "level": 3,
+      "label": "危険"
+    }
+  ]
 }
