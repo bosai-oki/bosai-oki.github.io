@@ -1,5 +1,5 @@
 {
-  "fetched_jst": "2026-03-12 08:52:34",
+  "fetched_jst": "2026-03-12 10:57:38",
   "warnings": [
     {
       "area_name": "",
@@ -18,7 +18,28 @@
         },
         {
           "code": "21",
+          "status": "解除"
+        }
+      ]
+    },
+    {
+      "area_name": "",
+      "warnings": [
+        {
+          "code": "14",
           "status": "継続"
+        },
+        {
+          "code": "15",
+          "status": "発表"
+        },
+        {
+          "code": "16",
+          "status": "発表"
+        },
+        {
+          "code": "21",
+          "status": "解除"
         }
       ]
     }
