@@ -128,91 +128,115 @@ jobs:
                       '南','南南西','南西','西南西','西','西北西','北西','北北西']
           try:
               latest_time = fetch('https://www.jma.go.jp/bosai/amedas/data/latest_time.txt').decode().strip()
-              # "20240101030000" → "20240101_030000"
+              print(f"AMeDAS latest_time: {latest_time!r}")
+              # "20260312100000" → "20260312_100000"
               ts = latest_time[:8] + '_' + latest_time[8:]
               for code, info in AMEDAS_STATIONS.items():
                   try:
-                      raw = json.loads(fetch(
+                      raw_full = json.loads(fetch(
                           f'https://www.jma.go.jp/bosai/amedas/data/point/{code}/{ts}.json'
                       ))
-                      def v(key):
-                          d = raw.get(key)
-                          return d[0] if isinstance(d, list) and d[1] == 0 else None
+                      # データは {"時刻文字列": {"temp": [...], ...}} の形式
+                      raw = list(raw_full.values())[0] if raw_full else {}
+                      def v(key, obs=raw):
+                          d = obs.get(key)
+                          if isinstance(d, list) and len(d) >= 2 and d[1] == 0:
+                              return d[0]
+                          return None
                       wd = v('windDirection')
                       result['amedas'].append({
                           **info,
                           'rainfall1h':  v('precipitation1h')  or 0,
                           'rainfall24h': v('precipitation24h') or 0,
                           'temp':        v('temp'),
-                          'wind':        f"{WIND_DIR[int(wd)] if wd else '–'} {v('wind') or 0}m/s",
+                          'wind':        f"{WIND_DIR[int(wd)] if wd is not None else '–'} {v('wind') or 0}m/s",
                       })
-                      print(f"AMeDAS {info['name']}: OK")
+                      print(f"AMeDAS {info['name']}: OK (1h={v('precipitation1h') or 0}mm, temp={v('temp')})")
                   except Exception as e:
                       print(f"AMeDAS {info['name']}: NG ({e})")
           except Exception as e:
               print(f"AMeDAS latest_time NG: {e}")
 
           # ── 河川水位（国交省 川の防災情報 XML）────────────────
-          # 沖縄県主要観測所コード（水系コード-観測所コード）
           RIVER_STATIONS = [
-              {'code': '4700440010060', 'name': '安里川　松川橋',   'loc': '那覇市',   'limit': {'watch':0.80,'warning':1.20,'danger':1.60,'critical':2.00}},
-              {'code': '4700430010050', 'name': '牧港川　牧港橋',   'loc': '浦添市',   'limit': {'watch':0.60,'warning':1.00,'danger':1.40,'critical':1.80}},
-              {'code': '4700420010040', 'name': '比謝川　嘉手納橋', 'loc': '中頭郡嘉手納町', 'limit': {'watch':1.20,'warning':1.80,'danger':2.40,'critical':3.00}},
-              {'code': '4700380010020', 'name': '羽地大川　羽地橋', 'loc': '名護市',   'limit': {'watch':0.80,'warning':1.20,'danger':1.80,'critical':2.40}},
-              {'code': '4700280010010', 'name': '慶佐次川　慶佐次', 'loc': '東村',     'limit': {'watch':1.00,'warning':1.60,'danger':2.20,'critical':2.80}},
+              {'code': '4700440010060', 'name': '安里川　松川橋',   'loc': '那覇市',       'limit': {'watch':0.80,'warning':1.20,'danger':1.60,'critical':2.00}},
+              {'code': '4700430010050', 'name': '牧港川　牧港橋',   'loc': '浦添市',       'limit': {'watch':0.60,'warning':1.00,'danger':1.40,'critical':1.80}},
+              {'code': '4700420010040', 'name': '比謝川　嘉手納橋', 'loc': '嘉手納町',     'limit': {'watch':1.20,'warning':1.80,'danger':2.40,'critical':3.00}},
+              {'code': '4700380010020', 'name': '羽地大川　羽地橋', 'loc': '名護市',       'limit': {'watch':0.80,'warning':1.20,'danger':1.80,'critical':2.40}},
+              {'code': '4700280010010', 'name': '慶佐次川　慶佐次', 'loc': '東村',         'limit': {'watch':1.00,'warning':1.60,'danger':2.20,'critical':2.80}},
           ]
           try:
-              xml_url = 'https://www.river.go.jp/kawabou/out/s_rslt.do?&sn=1&rn=0&tn=1&ext=0&fld=0&bsn=&ken=47&ctg=1&grp=0&mks=&ncs=&dts=&dmb=&scl=0&flt=0&fmt=xml'
+              xml_url = 'https://www.river.go.jp/kawabou/out/s_rslt.do?sn=1&rn=0&tn=1&ext=0&fld=0&bsn=&ken=47&ctg=1&grp=0&mks=&ncs=&dts=&dmb=&scl=0&flt=0&fmt=xml'
               raw_xml = fetch(xml_url)
               root = ET.fromstring(raw_xml)
-              # 観測所コード→水位のマップを作成
+              # XMLの構造を確認するため最初の要素をデバッグ出力
+              first_child = list(root)
+              print(f"河川XML root tag: {root.tag}, children: {[c.tag for c in first_child[:3]]}")
+              # 全タグを走査してstationCodeに近いものを探す
               level_map = {}
-              for obs in root.iter('observationStation'):
-                  code = obs.findtext('stationCode','').strip()
-                  lv   = obs.findtext('waterLevel','').strip()
+              all_tags = set(el.tag for el in root.iter())
+              print(f"河川XML全タグ: {all_tags}")
+              # タグ名を柔軟に対応
+              station_tag = 'observationStation' if 'observationStation' in all_tags else \
+                            'Station' if 'Station' in all_tags else \
+                            'station' if 'station' in all_tags else None
+              for obs in (root.iter(station_tag) if station_tag else []):
+                  code = (obs.findtext('stationCode') or obs.findtext('StationCode') or obs.findtext('station_cd') or '').strip()
+                  lv   = (obs.findtext('waterLevel') or obs.findtext('WaterLevel') or obs.findtext('wl') or '').strip()
                   if code and lv:
                       try: level_map[code] = float(lv)
                       except: pass
+              print(f"河川観測所数: {len(level_map)}, サンプルコード: {list(level_map.keys())[:3]}")
               for st in RIVER_STATIONS:
                   lv = level_map.get(st['code'])
                   if lv is not None:
-                      result['rivers'].append({
-                          'name':  st['name'],
-                          'loc':   st['loc'],
-                          'level': lv,
-                          'limit': st['limit'],
-                          'trend': 'unknown',
-                          'change': '–',
-                      })
+                      result['rivers'].append({'name':st['name'],'loc':st['loc'],'level':lv,'limit':st['limit'],'trend':'unknown','change':'–'})
                       print(f"河川 {st['name']}: {lv}m")
                   else:
-                      print(f"河川 {st['name']}: データなし")
+                      print(f"河川 {st['name']}: コード{st['code']}がマップになし")
           except Exception as e:
-              print(f"河川水位 NG: {e}")
+              print(f"河川水位 NG: {type(e).__name__}: {e}")
 
-          # ── ダム（国交省 ダム情報 XML）──────────────────────
+          # ── ダム（国交省 ダム情報）──────────────────────────
           try:
-              dam_url = 'http://www1.river.go.jp/cgi-bin/DspDamData.exe?KIND=1&PREF=47&FMT=XML'
+              # HTTPSに変更
+              dam_url = 'https://www1.river.go.jp/cgi-bin/DspDamData.exe?KIND=1&PREF=47&FMT=XML'
               raw_xml = fetch(dam_url)
               root = ET.fromstring(raw_xml)
-              for dam in root.iter('dam'):
-                  name   = dam.findtext('damName','').strip()
-                  rate   = dam.findtext('storageRate','').strip()
-                  inflow = dam.findtext('inflowRate','').strip()
-                  outflow= dam.findtext('outflowRate','').strip()
+              all_tags = set(el.tag for el in root.iter())
+              print(f"ダムXML全タグ: {all_tags}")
+              dam_count = 0
+              for dam in root.iter('Dam'):
+                  name    = (dam.findtext('DamName') or dam.findtext('damName') or '').strip()
+                  rate    = (dam.findtext('StorageRate') or dam.findtext('storageRate') or '').strip()
+                  inflow  = (dam.findtext('InflowRate') or dam.findtext('inflowRate') or '').strip()
+                  outflow = (dam.findtext('OutflowRate') or dam.findtext('outflowRate') or '').strip()
                   if not name: continue
-                  try:
+                  result['dams'].append({
+                      'name': name,
+                      'storageRate': float(rate)   if rate   else None,
+                      'inflow':      float(inflow)  if inflow  else None,
+                      'outflow':     float(outflow) if outflow else None,
+                  })
+                  dam_count += 1
+                  print(f"ダム {name}: {rate}%")
+              if dam_count == 0:
+                  # 小文字タグでも試す
+                  for dam in root.iter('dam'):
+                      name    = (dam.findtext('DamName') or dam.findtext('damName') or '').strip()
+                      rate    = (dam.findtext('StorageRate') or dam.findtext('storageRate') or '').strip()
+                      inflow  = (dam.findtext('InflowRate') or dam.findtext('inflowRate') or '').strip()
+                      outflow = (dam.findtext('OutflowRate') or dam.findtext('outflowRate') or '').strip()
+                      if not name: continue
                       result['dams'].append({
-                          'name':        name,
-                          'storageRate': float(rate)  if rate  else None,
-                          'inflow':      float(inflow) if inflow else None,
+                          'name': name,
+                          'storageRate': float(rate)   if rate   else None,
+                          'inflow':      float(inflow)  if inflow  else None,
                           'outflow':     float(outflow) if outflow else None,
                       })
                       print(f"ダム {name}: {rate}%")
-                  except Exception as e2:
-                      print(f"ダム {name} パースエラー: {e2}")
           except Exception as e:
-              print(f"ダム NG: {e}")
+              print(f"ダム NG: {type(e).__name__}: {e}")
 
           # ── キキクル（気象庁 危険度分布）──────────────────────
           try:
