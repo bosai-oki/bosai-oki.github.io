@@ -1116,41 +1116,45 @@ async function renderDashboard(){
     if(res.ok) data=await res.json();
   }catch(e){ console.warn('dashboard.json取得失敗',e); }
 
-  const kiki=data.kikukuru||[];
+  const warns=data.kikukuru||[];
   const fetched=data.fetched_jst||'';
 
-  // レベル → 色
-  const LC={0:'#4ade80',1:'#86efac',2:'#facc15',3:'#fb923c',4:'#f87171',5:'#dc2626'};
-  const LB={0:'#052e16',1:'#052e16',2:'#1c1600',3:'#1c0a00',4:'#1c0000',5:'#7f1d1d'};
+  // レベル → 色（0=発表なし、2=注意報、3=警報、5=特別警報）
+  const LC={0:'#475569',2:'#facc15',3:'#f87171',5:'#ffffff'};
+  const LB={0:'#0f172a', 2:'#1c1600',3:'#1c0000',5:'#7f1d1d'};
+  const LL={0:'発表なし',2:'注意報',3:'警  報',5:'特別警報'};
 
-  function kikiCell(lv){
-    const c=LC[lv]||'#4ade80', bg=LB[lv]||'#052e16';
-    const label={0:'平常',1:'注意',2:'警戒',3:'危険',4:'非常に危険',5:'最大級'}[lv]||'平常';
-    return `<td style="padding:4px 8px;text-align:center;background:${bg};color:${c};font-size:11px;font-weight:${lv>0?700:400};border:1px solid #1e293b;white-space:nowrap">${label}</td>`;
+  function cell(lv){
+    const c=LC[lv]??LC[0], bg=LB[lv]??LB[0], label=LL[lv]??'–';
+    const fw=lv>0?700:400;
+    return `<td style="padding:5px 8px;text-align:center;background:${bg};color:${c};font-size:11px;font-weight:${fw};border:1px solid #1e293b;white-space:nowrap;font-family:var(--mono)">${label}</td>`;
   }
 
   const P='background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:16px';
   const T='color:#e2e8f0;font-size:13px;font-weight:700;letter-spacing:.1em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #1e293b';
 
-  // キキクル表
-  const alertAreas = kiki.filter(k=>k.level>0);
-  const normalAreas= kiki.filter(k=>k.level===0);
-  // 警戒以上を上に表示、残りはグレーアウト
-  const sorted=[...alertAreas,...normalAreas];
+  const alertAreas = warns.filter(k=>k.level>0);
+  const sorted = [...alertAreas, ...warns.filter(k=>k.level===0)];
 
   const tableRows = sorted.map(k=>`<tr>
-    <td style="padding:4px 10px;color:${k.level>0?'#e2e8f0':'#475569'};font-size:12px;border:1px solid #1e293b;white-space:nowrap">${k.area}</td>
-    ${kikiCell(k.shinsu||0)}
-    ${kikiCell(k.kouzui||0)}
-    ${kikiCell(k.dosa||0)}
+    <td style="padding:5px 10px;color:${k.level>0?'#e2e8f0':'#475569'};font-size:12px;border:1px solid #1e293b;white-space:nowrap">${k.area}</td>
+    ${cell(k.shinsu||0)}
+    ${cell(k.kouzui||0)}
+    ${cell(k.dosa||0)}
   </tr>`).join('');
 
-  const kikiPanel = kiki.length
+  const warnPanel = warns.length
     ? `<div style="${P}">
-        <div style="${T}">🔴 キキクル（危険度分布）<span style="font-size:10px;font-weight:400;color:var(--muted);margin-left:8px">気象庁 警報・注意報より算出</span></div>
-        ${alertAreas.length>0?`<div style="background:#450a0a;border:1px solid #dc2626;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fca5a5;font-family:var(--mono)">⚠ ${alertAreas.map(k=>k.area).join('・')} で警戒情報あり</div>`:''}
+        <div style="${T}">⚠️ 気象警報・注意報（浸水害／洪水／土砂災害）<span style="font-size:10px;font-weight:400;color:var(--muted);margin-left:8px">気象庁 発表情報</span></div>
+        ${alertAreas.length>0
+          ? `<div style="background:#450a0a;border:1px solid #dc2626;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fca5a5;font-family:var(--mono)">
+              🚨 警報・注意報 発表中：${alertAreas.map(k=>k.area).join('・')}
+             </div>`
+          : `<div style="background:#052e16;border:1px solid #166534;border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#4ade80;font-family:var(--mono)">
+              ✅ 現在、警報・注意報の発表はありません
+             </div>`}
         <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-family:var(--mono)">
+          <table style="width:100%;border-collapse:collapse">
             <thead><tr>
               <th style="padding:6px 10px;text-align:left;color:#64748b;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">市区町村</th>
               <th style="padding:6px 8px;text-align:center;color:#60a5fa;font-size:11px;border:1px solid #1e293b;background:#0a0f1e">🌊 浸水害</th>
@@ -1160,30 +1164,31 @@ async function renderDashboard(){
             <tbody>${tableRows}</tbody>
           </table>
         </div>
-        <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
-          ${[{l:2,t:'警戒'},{l:3,t:'危険（警報）'}].map(x=>`<div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:10px;border-radius:2px;background:${LC[x.l]}"></div><span style="color:#475569;font-size:10px">${x.t}</span></div>`).join('')}
+        <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap">
+          ${[{l:2,t:'注意報'},{l:3,t:'警報'},{l:5,t:'特別警報'}].map(x=>`
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:28px;height:12px;border-radius:2px;background:${LB[x.l]};border:1px solid ${LC[x.l]}"></div>
+              <span style="color:#64748b;font-size:10px">${x.t}</span>
+            </div>`).join('')}
+          <span style="color:#334155;font-size:10px;margin-left:auto;font-family:var(--mono)">${fetched?'取得: '+fetched:''}</span>
         </div>
       </div>`
-    : `<div style="${P};color:var(--muted);font-family:var(--mono);font-size:11px">キキクル読込中…</div>`;
+    : `<div style="${P};color:var(--muted);font-family:var(--mono);font-size:11px">警報情報読込中…</div>`;
 
   // リンクパネル
-  const linkPanel = `<div style="${P}">
+  const linkPanel=`<div style="${P}">
     <div style="${T}">🔗 防災関連リンク</div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="https://www.jma.go.jp/bosai/risk/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🔴 キキクル（気象庁）</span><span class="ext-link-arr">↗</span></a>
+      <a href="https://www.jma.go.jp/bosai/warning/#area_type=class20s&area_code=471000" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">⚠️ 警報・注意報（気象庁）</span><span class="ext-link-arr">↗</span></a>
+      <a href="https://www.jma.go.jp/bosai/risk/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🔴 キキクル 危険度分布（気象庁）</span><span class="ext-link-arr">↗</span></a>
       <a href="https://www.river.go.jp/kawabou/out/s_rslt.do?ken=47" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🌊 川の防災情報・水位（国交省）</span><span class="ext-link-arr">↗</span></a>
       <a href="https://www.river.go.jp/kawabou/out/dam_rslt.do?pref=47" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🏗 ダム情報（国交省）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.jma.go.jp/bosai/amedas/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🌧 アメダス雨量・気温（気象庁）</span><span class="ext-link-arr">↗</span></a>
-      <a href="https://www.jma.go.jp/bosai/map.html#contents=flood_warning" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🗺 洪水警報・浸水危険度マップ（気象庁）</span><span class="ext-link-arr">↗</span></a>
-    </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center">
-      <span style="color:#334155;font-size:10px;font-family:var(--mono)">気象庁 リアルタイムデータ</span>
-      <span style="color:#334155;font-size:10px;font-family:var(--mono)">${fetched?'取得: '+fetched:''}</span>
+      <a href="https://www.jma.go.jp/bosai/amedas/" target="_blank" class="ext-link" style="font-size:12px"><span class="ext-link-name">🌧 アメダス 雨量・気温（気象庁）</span><span class="ext-link-arr">↗</span></a>
     </div>
   </div>`;
 
   el.innerHTML=`<div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;align-items:start">
-    ${kikiPanel}
+    ${warnPanel}
     ${linkPanel}
   </div>`;
 }
