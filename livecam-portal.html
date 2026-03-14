@@ -249,6 +249,15 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
       </div>
     </div>
 
+    <div style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.25);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:#fbbf24;margin-bottom:6px">⚠️ ご利用にあたって</div>
+      <p style="font-size:12px;line-height:1.9;color:var(--text);margin:0">
+        本サイトは個人が作成したものであり、掲載情報の正確性・完全性を担保するものではありません。<br>
+        気象情報・防災情報に関して疑義がある場合は、<strong>気象庁・お住まいの都道府県・市町村等の公式情報</strong>を必ずご確認ください。<br>
+        本サイトの閲覧・利用によって生じたいかなる損害についても、本サイトは一切の責任を負いません。
+      </p>
+    </div>
+
     <div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.8">
       <div>📡 <strong style="color:var(--text)">データソース:</strong> 沖縄県河川情報システム / 沖縄市 / 沖縄総合事務局 / 東村 / 大宜味村 / 海上保安庁 / YouTube</div>
       <div>🔄 <strong style="color:var(--text)">自動更新:</strong> 河川・防災画像は10分ごと（毎時05分〜） / ページは10分ごとに自動リロード</div>
@@ -348,6 +357,17 @@ footer{background:var(--deep);border-top:1px solid var(--edge);padding:5px 14px;
       </div>
       <!-- キキクル危険度分布アラート -->
       <div style="grid-column:1/-1" id="kikukuru-banner"></div>
+
+      <!-- 地震情報 -->
+      <div style="grid-column:1/-1">
+        <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+          <span>🌏 地震情報（沖縄周辺 直近24時間）</span>
+          <button class="tbtn" onclick="loadEarthquake()">↺ 更新</button>
+        </div>
+        <div id="earthquake-panel">
+          <div style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:8px">読込中…</div>
+        </div>
+      </div>
 
       <!-- 台風情報 -->
       <div style="grid-column:1/-1">
@@ -627,7 +647,7 @@ function showTab(id){
     document.getElementById('tab-'+t).classList.toggle('active',t===id);
   });
   document.getElementById('fetch-bar').style.display=id==='river'?'flex':'none';
-  if(id==='bousaiinfo'){ loadKikukuru(); loadBousaiInfo(); }
+  if(id==='bousaiinfo'){ loadKikukuru(); loadBousaiInfo(); loadEarthquake(); }
   // YouTubeタブを初めて開いた時にIntersectionObserverで遅延ロード開始
   if(id==='youtube' && !ytTabLoaded){
     ytTabLoaded=true;
@@ -962,6 +982,53 @@ const AREA_NAMES={
 };
 
 let bousaiInfoLoaded=false;
+// ── 地震情報 ──
+async function loadEarthquake(){
+  const el = document.getElementById('earthquake-panel');
+  if(!el) return;
+  try {
+    const res = await fetch('earthquake.json?_='+Math.floor(Date.now()/300000));
+    if(!res.ok){ el.innerHTML='<div style="color:var(--muted);font-family:var(--mono);font-size:11px;padding:8px">データなし</div>'; return; }
+    const data = await res.json();
+    const eqs = data.earthquakes || [];
+    if(!eqs.length){
+      el.innerHTML = `<div style="background:#0f172a;border:1px solid #1e293b;border-radius:8px;padding:12px 16px;color:#475569;font-family:var(--mono);font-size:12px">
+        ✅ 直近24時間以内に沖縄周辺での地震は記録されていません
+        <span style="float:right;font-size:10px;color:#334155">取得: ${data.fetched_jst||''}</span>
+      </div>`;
+      return;
+    }
+    const MAXI_COLOR = {
+      '1':'#64748b','2':'#64748b','3':'#60a5fa','4':'#facc15',
+      '5弱':'#fb923c','5強':'#f87171','6弱':'#dc2626','6強':'#b91c1c','7':'#7f1d1d'
+    };
+    const rows = eqs.map(q => {
+      const mc = MAXI_COLOR[q.maxi] || '#475569';
+      const maxiStr = q.maxi && q.maxi !== '-' ? `<span style="color:${mc};font-weight:700">震度${q.maxi}</span>` : '<span style="color:#334155">震度不明</span>';
+      return `<tr style="border-bottom:1px solid #1e293b">
+        <td style="padding:6px 10px;color:#94a3b8;font-size:11px;white-space:nowrap;font-family:var(--mono)">${q.time}</td>
+        <td style="padding:6px 10px;color:#e2e8f0;font-size:12px">${q.loc}</td>
+        <td style="padding:6px 10px;color:#7dd3fc;font-size:12px;text-align:center;white-space:nowrap">M${q.mag}</td>
+        <td style="padding:6px 10px;text-align:center;white-space:nowrap">${maxiStr}</td>
+        <td style="padding:6px 10px;color:#475569;font-size:11px;text-align:center;white-space:nowrap">${q.depth !== '-' ? q.depth+'km' : '–'}</td>
+      </tr>`;
+    }).join('');
+    el.innerHTML = `<div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;background:#0f172a;border:1px solid #1e293b;border-radius:8px;overflow:hidden">
+        <thead><tr style="background:#0a0f1e">
+          <th style="padding:8px 10px;text-align:left;color:#475569;font-size:11px;font-weight:400">日時</th>
+          <th style="padding:8px 10px;text-align:left;color:#475569;font-size:11px;font-weight:400">震源地</th>
+          <th style="padding:8px 10px;text-align:center;color:#475569;font-size:11px;font-weight:400">規模</th>
+          <th style="padding:8px 10px;text-align:center;color:#475569;font-size:11px;font-weight:400">最大震度</th>
+          <th style="padding:8px 10px;text-align:center;color:#475569;font-size:11px;font-weight:400">深さ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="text-align:right;color:#334155;font-size:10px;font-family:var(--mono);margin-top:4px">気象庁 地震情報 ― 取得: ${data.fetched_jst||''}</div>
+    </div>`;
+  } catch(e){ console.warn('earthquake.json取得失敗',e); }
+}
+
 // ── キキクル危険度分布アラート ──
 const KIKU_COLORS = {
   0: null,
@@ -1097,7 +1164,7 @@ function renderTyphoon(data){
 // ── 防災ダッシュボード ──
 setTimeout(()=>location.reload(),10*60*1000);
 nextAt=Date.now()+10*60*1000;
-loadCameras(); loadKikukuru(); loadBousaiInfo(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
+loadCameras(); loadKikukuru(); loadBousaiInfo(); loadEarthquake(); tick(); setInterval(tick,1000); setInterval(loadCameras,60*1000);
 </script>
 </body>
 </html>
